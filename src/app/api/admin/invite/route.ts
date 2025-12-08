@@ -176,7 +176,13 @@ export async function POST(request: NextRequest) {
     };
 
     try {
-      await resend.emails.send({
+      console.log("Sending invitation email...");
+      console.log("From:", defaultFrom);
+      console.log("To:", email);
+      console.log("Action Link:", actionLink);
+      console.log("API Key exists:", !!process.env.RESEND_API_KEY);
+
+      const emailResult = await resend.emails.send({
         from: defaultFrom,
         to: email,
         subject: "You're Invited to DanceOne Onboarding Hub",
@@ -221,12 +227,15 @@ export async function POST(request: NextRequest) {
           </div>
         `,
       });
-    } catch (emailError) {
+
+      console.log("Email sent successfully:", emailResult);
+    } catch (emailError: any) {
       console.error("Resend email error:", emailError);
+      console.error("Error details:", JSON.stringify(emailError, null, 2));
       // Don't fail the request - user was created, admin can resend
       return NextResponse.json({
         success: true,
-        warning: "User created but email failed to send. You can resend the invitation.",
+        warning: `User created but email failed to send: ${emailError?.message || 'Unknown error'}. You can resend the invitation.`,
         message: `User created for ${email}`,
         user: {
           id: createData.user.id,
