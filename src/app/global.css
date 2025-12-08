@@ -1,0 +1,24 @@
+html {
+  overflow-y: scroll;
+}
+
+.mainwrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.darkbg {
+  background-color: #171c23;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-grow: 1;
+  padding-bottom: 60px;
+  flex-direction: column;
+  z-index: 1;
+  width: 100%;
+  background-color: transparent;
+}
+
