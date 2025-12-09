@@ -198,7 +198,7 @@ export default function NewHireRequestPage() {
           subtitle="Basic information about the candidate"
         >
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidateFirstName">
                 First Name *
               </CustomFormLabel>
@@ -219,7 +219,7 @@ export default function NewHireRequestPage() {
                 }
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidateLastName">
                 Last Name *
               </CustomFormLabel>
@@ -240,7 +240,7 @@ export default function NewHireRequestPage() {
                 }
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidateEmail">
                 Email Address *
               </CustomFormLabel>
@@ -261,7 +261,7 @@ export default function NewHireRequestPage() {
                 }
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidatePhone">
                 Phone Number
               </CustomFormLabel>
@@ -274,7 +274,7 @@ export default function NewHireRequestPage() {
                 onBlur={formik.handleBlur}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="stateOfResidence">
                 State of Residence *
               </CustomFormLabel>
@@ -309,7 +309,7 @@ export default function NewHireRequestPage() {
           subtitle="Position and employment information"
         >
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="tourName">Tour Name *</CustomFormLabel>
               <CustomTextField
                 id="tourName"
@@ -324,7 +324,7 @@ export default function NewHireRequestPage() {
                 helperText={formik.touched.tourName && formik.errors.tourName}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="positionTitle">
                 Position Title
               </CustomFormLabel>
@@ -337,7 +337,7 @@ export default function NewHireRequestPage() {
                 onBlur={formik.handleBlur}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="hireDate">Hire Date *</CustomFormLabel>
               <CustomTextField
                 id="hireDate"
@@ -354,7 +354,7 @@ export default function NewHireRequestPage() {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="salaryEventRate">
                 Salary / Event Rate
               </CustomFormLabel>
@@ -383,7 +383,7 @@ export default function NewHireRequestPage() {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="workerCategory">
                 Worker Category *
               </CustomFormLabel>
@@ -404,7 +404,7 @@ export default function NewHireRequestPage() {
                 <MenuItem value="1099">1099 Contractor</MenuItem>
               </CustomSelect>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="hireOrRehire">
                 Hire Type *
               </CustomFormLabel>
@@ -425,7 +425,7 @@ export default function NewHireRequestPage() {
                 <MenuItem value="rehire">Rehire</MenuItem>
               </CustomSelect>
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <CustomFormLabel htmlFor="notes">Notes (Optional)</CustomFormLabel>
               <CustomTextField
                 id="notes"

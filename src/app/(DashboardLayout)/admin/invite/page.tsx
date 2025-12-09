@@ -92,7 +92,7 @@ export default function AdminInvitePage() {
       </Stack>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <DashboardCard
             title="Invitation Details"
             subtitle="The user will receive an email with a link to set up their account"
@@ -197,7 +197,7 @@ export default function AdminInvitePage() {
           </DashboardCard>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <DashboardCard title="Role Permissions">
             <Stack spacing={2}>
               <Box>

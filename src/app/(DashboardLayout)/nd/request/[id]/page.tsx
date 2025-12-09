@@ -223,7 +223,7 @@ export default function RequestDetailPage() {
 
       <Grid container spacing={3}>
         {/* Candidate Information */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
             title="Candidate Information"
             subtitle="Basic candidate details"
@@ -244,7 +244,7 @@ export default function RequestDetailPage() {
         </Grid>
 
         {/* Job Details */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard title="Job Details" subtitle="Position information">
             <>
               <InfoRow label="Tour Name" value={request.tourName} />
@@ -289,7 +289,7 @@ export default function RequestDetailPage() {
 
         {/* Notes */}
         {request.notes && (
-          <Grid item xs={12}>
+          <Grid size={12}>
             <DashboardCard title="Notes" subtitle="Additional information">
               <Typography>{request.notes}</Typography>
             </DashboardCard>
@@ -297,7 +297,7 @@ export default function RequestDetailPage() {
         )}
 
         {/* Timeline */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <DashboardCard title="Timeline" subtitle="Request history">
             <>
               <InfoRow

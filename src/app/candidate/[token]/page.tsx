@@ -379,7 +379,7 @@ export default function CandidateFormPage() {
               Position Details
             </Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="caption" color="textSecondary">
                   Tour Name
                 </Typography>
@@ -387,7 +387,7 @@ export default function CandidateFormPage() {
                   {prefilledData?.tourName || "-"}
                 </Typography>
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={6}>
                 <Typography variant="caption" color="textSecondary">
                   Position
                 </Typography>
@@ -414,7 +414,7 @@ export default function CandidateFormPage() {
                 Personal Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="taxIdNumber">
                     Tax ID / SSN *
                   </CustomFormLabel>
@@ -435,7 +435,7 @@ export default function CandidateFormPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="birthDate">
                     Date of Birth *
                   </CustomFormLabel>
@@ -457,7 +457,7 @@ export default function CandidateFormPage() {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="maritalStatusState">
                     Marital Status *
                   </CustomFormLabel>
@@ -492,7 +492,7 @@ export default function CandidateFormPage() {
                 Address
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <CustomFormLabel htmlFor="addressLine1">
                     Address Line 1 *
                   </CustomFormLabel>
@@ -512,7 +512,7 @@ export default function CandidateFormPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <CustomFormLabel htmlFor="addressLine2">
                     Address Line 2
                   </CustomFormLabel>
@@ -526,7 +526,7 @@ export default function CandidateFormPage() {
                     placeholder="Apt, Suite, Unit, etc."
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <CustomFormLabel htmlFor="addressCity">City *</CustomFormLabel>
                   <CustomTextField
                     id="addressCity"
@@ -544,7 +544,7 @@ export default function CandidateFormPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <CustomFormLabel htmlFor="addressState">
                     State *
                   </CustomFormLabel>
@@ -568,7 +568,7 @@ export default function CandidateFormPage() {
                     ))}
                   </CustomSelect>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <CustomFormLabel htmlFor="addressZipCode">
                     ZIP Code *
                   </CustomFormLabel>
@@ -600,7 +600,7 @@ export default function CandidateFormPage() {
                 Contact Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="candidatePhone">
                     Phone Number *
                   </CustomFormLabel>
@@ -621,7 +621,7 @@ export default function CandidateFormPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="candidateEmail">
                     Email Address *
                   </CustomFormLabel>

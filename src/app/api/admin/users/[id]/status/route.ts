@@ -66,16 +66,18 @@ export async function PATCH(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
-      userToUpdate.supabaseAuthId,
-      {
-        ban_duration: isActive ? "none" : "876600h", // ~100 years if deactivating
-      }
-    );
+    if (userToUpdate.supabaseAuthId) {
+      const { error: authUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
+        userToUpdate.supabaseAuthId,
+        {
+          ban_duration: isActive ? "none" : "876600h", // ~100 years if deactivating
+        }
+      );
 
-    if (authUpdateError) {
-      console.error("Supabase auth update error:", authUpdateError);
-      // Continue with database update even if auth update fails
+      if (authUpdateError) {
+        console.error("Supabase auth update error:", authUpdateError);
+        // Continue with database update even if auth update fails
+      }
     }
 
     // Update database

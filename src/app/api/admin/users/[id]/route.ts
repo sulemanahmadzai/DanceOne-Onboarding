@@ -56,13 +56,15 @@ export async function DELETE(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
-      userToDelete.supabaseAuthId
-    );
+    if (userToDelete.supabaseAuthId) {
+      const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(
+        userToDelete.supabaseAuthId
+      );
 
-    if (authDeleteError) {
-      console.error("Supabase auth delete error:", authDeleteError);
-      // Continue with database deletion even if auth deletion fails
+      if (authDeleteError) {
+        console.error("Supabase auth delete error:", authDeleteError);
+        // Continue with database deletion even if auth deletion fails
+      }
     }
 
     // Delete from database

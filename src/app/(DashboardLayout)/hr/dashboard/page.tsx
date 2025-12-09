@@ -250,8 +250,8 @@ export default function HRDashboardPage() {
       </Stack>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Requests"
             value={stats.total}
@@ -262,7 +262,7 @@ export default function HRDashboardPage() {
             active={statusFilter === "all"}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Waiting for Candidate"
             value={stats.waitingForCandidate}
@@ -275,7 +275,7 @@ export default function HRDashboardPage() {
             active={statusFilter === OnboardingStatus.WAITING_FOR_CANDIDATE}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Waiting for HR"
             value={stats.waitingForHR}
@@ -286,7 +286,7 @@ export default function HRDashboardPage() {
             active={statusFilter === OnboardingStatus.WAITING_FOR_HR}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Completed"
             value={stats.completed}

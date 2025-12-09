@@ -337,7 +337,7 @@ export default function HRRequestPage() {
 
       <Grid container spacing={3}>
         {/* Read-only ND Data */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
             title="ND Information"
             subtitle="Submitted by National Director"
@@ -393,7 +393,7 @@ export default function HRRequestPage() {
         </Grid>
 
         {/* Read-only Candidate Data */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
             title="Candidate Information"
             subtitle="Submitted by candidate"
@@ -442,7 +442,7 @@ export default function HRRequestPage() {
         </Grid>
 
         {/* HR Form */}
-        <Grid item xs={12}>
+        <Grid size={12}>
           <DashboardCard
             title="HR Details - ADP Information"
             subtitle={
@@ -455,7 +455,7 @@ export default function HRRequestPage() {
           >
             <form onSubmit={formik.handleSubmit}>
               <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="changeEffectiveDate">
                     Change Effective Date *
                   </CustomFormLabel>
@@ -479,7 +479,7 @@ export default function HRRequestPage() {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="companyCode">
                     Company Code *
                   </CustomFormLabel>
@@ -500,7 +500,7 @@ export default function HRRequestPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="homeDepartment">
                     Home Department *
                   </CustomFormLabel>
@@ -522,7 +522,7 @@ export default function HRRequestPage() {
                     }
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="sui">SUI (State Unemployment Insurance) *</CustomFormLabel>
                   <CustomSelect
                     id="sui"
@@ -542,7 +542,7 @@ export default function HRRequestPage() {
                     ))}
                   </CustomSelect>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="willWorkerCompleteI9">
                     Will Worker Complete I-9? *
                   </CustomFormLabel>
@@ -564,7 +564,7 @@ export default function HRRequestPage() {
                     <MenuItem value="no">No</MenuItem>
                   </CustomSelect>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="eVerifyWorkLocation">
                     E-Verify Work Location *
                   </CustomFormLabel>
