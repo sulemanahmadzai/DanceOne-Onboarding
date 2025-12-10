@@ -68,46 +68,32 @@ export async function updateSession(request: NextRequest) {
 
   // If user is logged in, check role-based access
   if (user && !isPublicRoute) {
-    // Get user role from cookie, but verify it matches the current user
+    // Check cached role from cookie (valid for 7 days)
     const cachedRole = request.cookies.get("user_role")?.value;
     const cachedUserId = request.cookies.get("user_role_id")?.value;
 
     let userRole = cachedRole;
 
-    // If no cached role or user ID changed, fetch fresh role
-    if (!userRole || cachedUserId !== user.id) {
-      try {
-        const response = await fetch(
-          `${request.nextUrl.origin}/api/auth/user-role`,
-          {
-            headers: {
-              cookie: request.headers.get("cookie") || "",
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          userRole = data.role;
-          // Set role and user ID in response cookie for future requests
-          supabaseResponse.cookies.set("user_role", userRole || "nd", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 60 * 60, // 1 hour
-          });
-          supabaseResponse.cookies.set("user_role_id", user.id, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 60 * 60, // 1 hour
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      }
-    }
+    // If cache is valid (same user), use it - no DB/API call needed!
+    // If cache is missing or user changed, we'll let the layout fetch it once
+    // and set the needsRoleRefresh flag for the layout to handle
+    if (cachedRole && cachedUserId === user.id) {
+      // Cache hit - super fast path, no additional calls needed
+      userRole = cachedRole;
+    } else {
+      // Cache miss - set a flag cookie so the layout knows to refresh
+      // The layout (server component) will fetch the role and set the cache
+      supabaseResponse.cookies.set("needs_role_refresh", "true", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60, // Short-lived flag
+        path: "/",
+      });
 
-    userRole = userRole || "nd"; // Default to nd if role not found
+      // Use default role for initial navigation, layout will correct if needed
+      userRole = "nd";
+    }
 
     // Check if user is trying to access login page
     if (pathname === "/auth/login") {

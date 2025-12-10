@@ -8,20 +8,19 @@ export async function POST() {
 
     // Create response and clear role cookies
     const response = NextResponse.json({ success: true });
-    
+
     // Clear the cached role cookies
-    response.cookies.set("user_role", "", {
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "lax" as const,
       maxAge: 0, // Expire immediately
-    });
-    response.cookies.set("user_role_id", "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 0, // Expire immediately
-    });
+      path: "/",
+    };
+
+    response.cookies.set("user_role", "", cookieOptions);
+    response.cookies.set("user_role_id", "", cookieOptions);
+    response.cookies.set("user_name", "", cookieOptions);
 
     return response;
   } catch (error) {
@@ -29,6 +28,3 @@ export async function POST() {
     return NextResponse.json({ error: "Logout failed" }, { status: 500 });
   }
 }
-
-
-
