@@ -22,6 +22,25 @@ import CustomTextField from "@/app/components/forms/theme-elements/CustomTextFie
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
 import CustomSelect from "@/app/components/forms/theme-elements/CustomSelect";
 
+const TOUR_NAMES = [
+  { value: "Starpower", label: "Starpower" },
+  { value: "Revolution", label: "Revolution" },
+  { value: "Imagine", label: "Imagine" },
+  { value: "Nexstar", label: "Nexstar" },
+  { value: "DreamMaker", label: "DreamMaker" },
+  { value: "Believe", label: "Believe" },
+  { value: "Wild", label: "Wild" },
+  { value: "Radix", label: "Radix" },
+  { value: "Jump", label: "Jump" },
+  { value: "24Seven", label: "24Seven" },
+  { value: "Nuvo", label: "Nuvo" },
+  { value: "Kaos", label: "Kaos" },
+  { value: "Ovation", label: "Ovation" },
+  { value: "Power Pak", label: "Power Pak" },
+  { value: "WCW WDP", label: "WCW WDP" },
+  { value: "Other", label: "Other" },
+];
+
 const US_STATES = [
   { value: "AL", label: "Alabama" },
   { value: "AK", label: "Alaska" },
@@ -81,9 +100,14 @@ const validationSchema = Yup.object({
   candidateEmail: Yup.string()
     .email("Invalid email address")
     .required("Email is required"),
-  candidatePhone: Yup.string(),
+  candidatePhone: Yup.string().required("Phone number is required"),
   stateOfResidence: Yup.string().required("State of residence is required"),
-  tourName: Yup.string().required("Tour name is required"),
+  tourNameSelect: Yup.string().required("Tour name is required"),
+  tourNameOther: Yup.string().when("tourNameSelect", {
+    is: "Other",
+    then: (schema) => schema.required("Please specify the tour name"),
+    otherwise: (schema) => schema,
+  }),
   positionTitle: Yup.string(),
   hireDate: Yup.string().required("Hire date is required"),
   eventRate: Yup.number().positive("Must be a positive number").nullable(),
@@ -146,7 +170,8 @@ export default function NewHireRequestPage() {
       candidateEmail: "",
       candidatePhone: "",
       stateOfResidence: "",
-      tourName: "",
+      tourNameSelect: "",
+      tourNameOther: "",
       positionTitle: "",
       hireDate: "",
       eventRate: "",
@@ -160,11 +185,22 @@ export default function NewHireRequestPage() {
       setSubmitting(true);
       setError("");
 
+      // Combine tourName fields - use Other value if "Other" is selected
+      const tourName =
+        values.tourNameSelect === "Other"
+          ? values.tourNameOther
+          : values.tourNameSelect;
+
+      const submitData = {
+        ...values,
+        tourName,
+      };
+
       try {
         const response = await fetch("/api/onboarding/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
+          body: JSON.stringify(submitData),
         });
 
         const data = await response.json();
@@ -305,7 +341,7 @@ export default function NewHireRequestPage() {
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidatePhone">
-                Phone Number
+                Phone Number *
               </CustomFormLabel>
               <CustomTextField
                 id="candidatePhone"
@@ -314,6 +350,13 @@ export default function NewHireRequestPage() {
                 value={formik.values.candidatePhone}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
+                error={
+                  formik.touched.candidatePhone &&
+                  Boolean(formik.errors.candidatePhone)
+                }
+                helperText={
+                  formik.touched.candidatePhone && formik.errors.candidatePhone
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -352,20 +395,52 @@ export default function NewHireRequestPage() {
         >
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel htmlFor="tourName">Tour Name *</CustomFormLabel>
-              <CustomTextField
-                id="tourName"
-                name="tourName"
+              <CustomFormLabel htmlFor="tourNameSelect">
+                Tour Name *
+              </CustomFormLabel>
+              <CustomSelect
+                id="tourNameSelect"
+                name="tourNameSelect"
                 fullWidth
-                value={formik.values.tourName}
+                value={formik.values.tourNameSelect}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={
-                  formik.touched.tourName && Boolean(formik.errors.tourName)
+                  formik.touched.tourNameSelect &&
+                  Boolean(formik.errors.tourNameSelect)
                 }
-                helperText={formik.touched.tourName && formik.errors.tourName}
-              />
+              >
+                <MenuItem value="">Select Tour</MenuItem>
+                {TOUR_NAMES.map((tour) => (
+                  <MenuItem key={tour.value} value={tour.value}>
+                    {tour.label}
+                  </MenuItem>
+                ))}
+              </CustomSelect>
             </Grid>
+            {formik.values.tourNameSelect === "Other" && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CustomFormLabel htmlFor="tourNameOther">
+                  Specify Tour Name *
+                </CustomFormLabel>
+                <CustomTextField
+                  id="tourNameOther"
+                  name="tourNameOther"
+                  fullWidth
+                  placeholder="Enter tour name"
+                  value={formik.values.tourNameOther}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.tourNameOther &&
+                    Boolean(formik.errors.tourNameOther)
+                  }
+                  helperText={
+                    formik.touched.tourNameOther && formik.errors.tourNameOther
+                  }
+                />
+              </Grid>
+            )}
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="positionTitle">
                 Position Title
@@ -457,8 +532,8 @@ export default function NewHireRequestPage() {
                 }
               >
                 <MenuItem value="">Select Category</MenuItem>
-                <MenuItem value="W2">W2 Employee</MenuItem>
-                <MenuItem value="1099">1099 Contractor</MenuItem>
+                <MenuItem value="1099">1099</MenuItem>
+                <MenuItem value="W2">W2</MenuItem>
               </CustomSelect>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -478,8 +553,8 @@ export default function NewHireRequestPage() {
                 }
               >
                 <MenuItem value="">Select Type</MenuItem>
-                <MenuItem value="new_hire">New Hire</MenuItem>
-                <MenuItem value="rehire">Rehire</MenuItem>
+                <MenuItem value="hire">HIRE</MenuItem>
+                <MenuItem value="rehire">REHIRE</MenuItem>
               </CustomSelect>
             </Grid>
             <Grid size={12}>

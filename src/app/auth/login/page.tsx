@@ -38,17 +38,18 @@ export default function LoginPage() {
         return;
       }
 
-      // Fetch user role from database
+      // Fetch user role from database (this also sets the role cache cookies)
       const response = await fetch("/api/auth/user-role");
       const data = await response.json();
 
-      // Redirect based on role
+      // Use window.location to ensure a full page load that picks up the new cookies
+      // This is important because the middleware needs the cookies to redirect correctly
       if (data.role === "admin") {
-        router.push("/admin/dashboard");
+        window.location.href = "/admin/dashboard";
       } else if (data.role === "hr") {
-        router.push("/hr/dashboard");
+        window.location.href = "/hr/dashboard";
       } else {
-        router.push("/nd/dashboard");
+        window.location.href = "/nd/dashboard";
       }
     } catch (err) {
       setError("An unexpected error occurred");
@@ -175,4 +176,3 @@ export default function LoginPage() {
     </Box>
   );
 }
-

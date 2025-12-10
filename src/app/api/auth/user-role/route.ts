@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { eq, or } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -39,7 +39,24 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ role: dbUser.role, user: dbUser });
+    // Set role cache cookies so middleware can redirect correctly
+    const response = NextResponse.json({ role: dbUser.role, user: dbUser });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax" as const,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: "/",
+    };
+
+    response.cookies.set("user_role", dbUser.role, cookieOptions);
+    response.cookies.set("user_role_id", user.id, cookieOptions);
+    if (dbUser.name) {
+      response.cookies.set("user_name", dbUser.name, cookieOptions);
+    }
+
+    return response;
   } catch (error) {
     console.error("Error fetching user role:", error);
     return NextResponse.json(
@@ -48,4 +65,3 @@ export async function GET() {
     );
   }
 }
-

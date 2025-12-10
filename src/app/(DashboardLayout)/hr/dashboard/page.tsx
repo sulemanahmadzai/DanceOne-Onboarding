@@ -21,6 +21,14 @@ import {
   ToggleButtonGroup,
   TextField,
   InputAdornment,
+  MenuItem,
+  FormControl,
+  Select,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -33,9 +41,11 @@ import {
   IconSearch,
   IconFileExport,
   IconPlus,
+  IconTrash,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
+import { TOUR_FILTER_OPTIONS } from "@/lib/constants/tours";
 
 interface OnboardingRequest {
   id: number;
@@ -170,6 +180,10 @@ export default function HRDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [tourFilter, setTourFilter] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteRequestId, setDeleteRequestId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,12 +212,16 @@ export default function HRDashboardPage() {
     fetchData();
   }, []);
 
-  // Filter requests based on status and search query
+  // Filter requests based on status, search query, and tour
   useEffect(() => {
     let filtered = requests;
 
     if (statusFilter !== "all") {
       filtered = filtered.filter((r) => r.status === statusFilter);
+    }
+
+    if (tourFilter !== "all") {
+      filtered = filtered.filter((r) => r.tourName === tourFilter);
     }
 
     if (searchQuery) {
@@ -220,7 +238,31 @@ export default function HRDashboardPage() {
     }
 
     setFilteredRequests(filtered);
-  }, [statusFilter, searchQuery, requests]);
+  }, [statusFilter, searchQuery, tourFilter, requests]);
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteRequestId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteRequestId) return;
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/onboarding/${deleteRequestId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setRequests((prev) => prev.filter((r) => r.id !== deleteRequestId));
+      }
+    } catch (error) {
+      console.error("Error deleting request:", error);
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+      setDeleteRequestId(null);
+    }
+  };
 
   const handleStatusFilterChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -331,20 +373,36 @@ export default function HRDashboardPage() {
             alignItems={{ xs: "stretch", md: "center" }}
             justifyContent="space-between"
           >
-            <TextField
-              placeholder="Search by name, email, or tour..."
-              size="small"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IconSearch size={18} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ minWidth: 300 }}
-            />
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                placeholder="Search by name, email, or tour..."
+                size="small"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={18} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ minWidth: 280 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 180 }}>
+                <Select
+                  value={tourFilter}
+                  onChange={(e) => setTourFilter(e.target.value)}
+                  displayEmpty
+                >
+                  <MenuItem value="all">All Tours</MenuItem>
+                  {TOUR_FILTER_OPTIONS.map((tour) => (
+                    <MenuItem key={tour.value} value={tour.value}>
+                      {tour.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
             <ToggleButtonGroup
               value={statusFilter}
               exclusive
@@ -435,10 +493,12 @@ export default function HRDashboardPage() {
                     </TableCell>
                     <TableCell>{request.addressState || "-"}</TableCell>
                     <TableCell>
-                      {request.hireOrRehire === "new_hire"
-                        ? "New Hire"
+                      {request.hireOrRehire === "hire"
+                        ? "HIRE"
                         : request.hireOrRehire === "rehire"
-                        ? "Rehire"
+                        ? "REHIRE"
+                        : request.hireOrRehire === "new_hire"
+                        ? "HIRE"
                         : "-"}
                     </TableCell>
                     <TableCell>{request.workerCategory || "-"}</TableCell>
@@ -459,21 +519,36 @@ export default function HRDashboardPage() {
                     </TableCell>
                     <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell align="right">
-                      <Tooltip title="View / Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            router.push(`/hr/request/${request.id}`)
-                          }
-                          color={
-                            request.status === OnboardingStatus.WAITING_FOR_HR
-                              ? "primary"
-                              : "default"
-                          }
-                        >
-                          <IconEye size={18} />
-                        </IconButton>
-                      </Tooltip>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="flex-end"
+                      >
+                        <Tooltip title="View / Edit">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              router.push(`/hr/request/${request.id}`)
+                            }
+                            color={
+                              request.status === OnboardingStatus.WAITING_FOR_HR
+                                ? "primary"
+                                : "default"
+                            }
+                          >
+                            <IconEye size={18} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteClick(request.id)}
+                          >
+                            <IconTrash size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))
@@ -482,6 +557,36 @@ export default function HRDashboardPage() {
           </Table>
         </TableContainer>
       </DashboardCard>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Request</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this onboarding request? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -17,6 +17,11 @@ import {
   CardContent,
   Grid,
   Skeleton,
+  TextField,
+  InputAdornment,
+  MenuItem,
+  FormControl,
+  Select,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -27,9 +32,11 @@ import {
   IconClockHour4,
   IconCircleCheck,
   IconAlertCircle,
+  IconSearch,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
+import { TOUR_FILTER_OPTIONS } from "@/lib/constants/tours";
 
 interface OnboardingRequest {
   id: number;
@@ -134,6 +141,9 @@ const StatCard = ({
 export default function NDDashboardPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<OnboardingRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<OnboardingRequest[]>(
+    []
+  );
   const [stats, setStats] = useState<DashboardStats>({
     total: 0,
     waitingForCandidate: 0,
@@ -141,6 +151,8 @@ export default function NDDashboardPage() {
     completed: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tourFilter, setTourFilter] = useState<string>("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -149,6 +161,7 @@ export default function NDDashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setRequests(data.requests || []);
+          setFilteredRequests(data.requests || []);
           setStats(
             data.stats || {
               total: 0,
@@ -167,6 +180,28 @@ export default function NDDashboardPage() {
 
     fetchData();
   }, []);
+
+  // Filter requests based on search query and tour filter
+  useEffect(() => {
+    let filtered = requests;
+
+    if (tourFilter !== "all") {
+      filtered = filtered.filter((r) => r.tourName === tourFilter);
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          r.candidateFirstName.toLowerCase().includes(query) ||
+          r.candidateLastName.toLowerCase().includes(query) ||
+          r.candidateEmail.toLowerCase().includes(query) ||
+          r.tourName?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredRequests(filtered);
+  }, [tourFilter, searchQuery, requests]);
 
   return (
     <Box>
@@ -240,10 +275,50 @@ export default function NDDashboardPage() {
         </Grid>
       </Grid>
 
+      {/* Filters */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            alignItems={{ xs: "stretch", md: "center" }}
+          >
+            <TextField
+              placeholder="Search by name or email..."
+              size="small"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ minWidth: 250 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <Select
+                value={tourFilter}
+                onChange={(e) => setTourFilter(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="all">All Tours</MenuItem>
+                {TOUR_FILTER_OPTIONS.map((tour) => (
+                  <MenuItem key={tour.value} value={tour.value}>
+                    {tour.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </CardContent>
+      </Card>
+
       {/* Requests Table */}
       <DashboardCard
         title="All Onboarding Requests"
-        subtitle={`Showing ${requests.length} requests`}
+        subtitle={`Showing ${filteredRequests.length} of ${requests.length} requests`}
       >
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table sx={{ minWidth: 1400 }}>
@@ -278,17 +353,18 @@ export default function NDDashboardPage() {
                     ))}
                   </TableRow>
                 ))
-              ) : requests.length === 0 ? (
+              ) : filteredRequests.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">
-                      No onboarding requests yet. Click &quot;New Hire
-                      Request&quot; to create one.
+                      {requests.length === 0
+                        ? 'No onboarding requests yet. Click "New Hire Request" to create one.'
+                        : "No requests match your filters."}
                     </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
-                requests.map((request) => (
+                filteredRequests.map((request) => (
                   <TableRow key={request.id} hover>
                     <TableCell>#{request.id}</TableCell>
                     <TableCell>{request.tourName || "-"}</TableCell>
@@ -310,10 +386,12 @@ export default function NDDashboardPage() {
                     </TableCell>
                     <TableCell>{request.addressState || "-"}</TableCell>
                     <TableCell>
-                      {request.hireOrRehire === "new_hire"
-                        ? "New Hire"
+                      {request.hireOrRehire === "hire"
+                        ? "HIRE"
                         : request.hireOrRehire === "rehire"
-                        ? "Rehire"
+                        ? "REHIRE"
+                        : request.hireOrRehire === "new_hire"
+                        ? "HIRE"
                         : "-"}
                     </TableCell>
                     <TableCell>{request.workerCategory || "-"}</TableCell>

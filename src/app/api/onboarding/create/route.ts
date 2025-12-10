@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       "candidateFirstName",
       "candidateLastName",
       "candidateEmail",
+      "candidatePhone",
       "stateOfResidence",
       "tourName",
       "hireDate",
@@ -53,6 +54,24 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+    }
+
+    // Check for duplicate email in non-completed requests
+    const existingRequest = await db.query.onboardingRequests.findFirst({
+      where: eq(onboardingRequests.candidateEmail, body.candidateEmail),
+    });
+
+    if (
+      existingRequest &&
+      existingRequest.status !== OnboardingStatus.COMPLETED
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "An onboarding request with this email already exists and is still in progress.",
+        },
+        { status: 400 }
+      );
     }
 
     // Create the onboarding request

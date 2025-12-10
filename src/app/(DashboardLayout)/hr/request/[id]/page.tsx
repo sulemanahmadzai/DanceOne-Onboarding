@@ -15,17 +15,26 @@ import {
   Skeleton,
   Card,
   CardContent,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { IconArrowLeft, IconCheck, IconSend } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconSend,
+  IconEdit,
+  IconDeviceFloppy,
+} from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
 import CustomSelect from "@/app/components/forms/theme-elements/CustomSelect";
 import { OnboardingStatus } from "@/lib/db/schema";
+import { TOUR_NAMES } from "@/lib/constants/tours";
 
 const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -148,6 +157,36 @@ const InfoRow = ({
   </Box>
 );
 
+// ND Form validation
+const ndValidationSchema = Yup.object({
+  tourName: Yup.string().required("Tour name is required"),
+  positionTitle: Yup.string(),
+  hireDate: Yup.string().required("Hire date is required"),
+  eventRate: Yup.string(),
+  dayRate: Yup.string(),
+  workerCategory: Yup.string().required("Worker category is required"),
+  hireOrRehire: Yup.string().required("Hire type is required"),
+  notes: Yup.string(),
+});
+
+// Candidate Form validation
+const candidateValidationSchema = Yup.object({
+  candidateFirstName: Yup.string().required("First name is required"),
+  candidateLastName: Yup.string().required("Last name is required"),
+  candidateEmail: Yup.string()
+    .email("Invalid email")
+    .required("Email is required"),
+  candidatePhone: Yup.string(),
+  taxIdNumber: Yup.string(),
+  birthDate: Yup.string(),
+  maritalStatusState: Yup.string(),
+  addressLine1: Yup.string(),
+  addressLine2: Yup.string(),
+  addressCity: Yup.string(),
+  addressState: Yup.string(),
+  addressZipCode: Yup.string(),
+});
+
 const getStatusChip = (status: string) => {
   const statusConfig: Record<string, { label: string; color: any }> = {
     [OnboardingStatus.ND_DRAFT]: { label: "Draft", color: "default" },
@@ -188,6 +227,8 @@ export default function HRRequestPage() {
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState<string>("hr");
+  const [editMode, setEditMode] = useState<"nd" | "candidate" | null>(null);
+  const [editSuccess, setEditSuccess] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -260,6 +301,111 @@ export default function HRRequestPage() {
       }
     },
   });
+
+  // ND Edit form
+  const ndFormik = useFormik({
+    initialValues: {
+      tourName: request?.tourName || "",
+      positionTitle: request?.positionTitle || "",
+      hireDate: request?.hireDate || "",
+      eventRate: request?.eventRate || "",
+      dayRate: request?.dayRate || "",
+      workerCategory: request?.workerCategory || "",
+      hireOrRehire: request?.hireOrRehire || "",
+      notes: request?.notes || "",
+    },
+    enableReinitialize: true,
+    validationSchema: ndValidationSchema,
+    onSubmit: async (values) => {
+      setSubmitting(true);
+      setError("");
+      try {
+        const response = await fetch(`/api/onboarding/${params.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        if (!response.ok) throw new Error("Failed to update");
+        const data = await response.json();
+        setRequest((prev) => (prev ? { ...prev, ...data } : null));
+        setEditMode(null);
+        setEditSuccess("ND information updated successfully!");
+        setTimeout(() => setEditSuccess(""), 3000);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
+
+  // Candidate Edit form
+  const candidateFormik = useFormik({
+    initialValues: {
+      candidateFirstName: request?.candidateFirstName || "",
+      candidateLastName: request?.candidateLastName || "",
+      candidateEmail: request?.candidateEmail || "",
+      candidatePhone: request?.candidatePhone || "",
+      taxIdNumber: request?.taxIdNumber || "",
+      birthDate: request?.birthDate || "",
+      maritalStatusState: request?.maritalStatusState || "",
+      addressLine1: request?.addressLine1 || "",
+      addressLine2: request?.addressLine2 || "",
+      addressCity: request?.addressCity || "",
+      addressState: request?.addressState || "",
+      addressZipCode: request?.addressZipCode || "",
+    },
+    enableReinitialize: true,
+    validationSchema: candidateValidationSchema,
+    onSubmit: async (values) => {
+      setSubmitting(true);
+      setError("");
+      try {
+        const response = await fetch(`/api/onboarding/${params.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        });
+        if (!response.ok) throw new Error("Failed to update");
+        const data = await response.json();
+        setRequest((prev) => (prev ? { ...prev, ...data } : null));
+        setEditMode(null);
+        setEditSuccess("Candidate information updated successfully!");
+        setTimeout(() => setEditSuccess(""), 3000);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+  });
+
+  // Function to fill candidate form and update status (for HR to fill on behalf of candidate)
+  const handleFillForCandidate = async () => {
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/onboarding/${params.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...candidateFormik.values,
+          status: OnboardingStatus.WAITING_FOR_HR,
+          candidateSubmittedAt: new Date().toISOString(),
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to update");
+      const data = await response.json();
+      setRequest((prev) => (prev ? { ...prev, ...data } : null));
+      setEditMode(null);
+      setEditSuccess("Candidate form completed on their behalf!");
+      setTimeout(() => setEditSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const getActiveStep = () => {
     if (!request) return 0;
@@ -357,6 +503,12 @@ export default function HRRequestPage() {
         </Alert>
       )}
 
+      {editSuccess && (
+        <Alert severity="success" sx={{ mb: 3 }} icon={<IconCheck size={20} />}>
+          {editSuccess}
+        </Alert>
+      )}
+
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
@@ -364,114 +516,422 @@ export default function HRRequestPage() {
       )}
 
       <Grid container spacing={3}>
-        {/* Read-only ND Data */}
+        {/* ND Data - Editable */}
         <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
             title="ND Information"
             subtitle="Submitted by National Director"
+            action={
+              editMode !== "nd" && (
+                <Button
+                  size="small"
+                  startIcon={<IconEdit size={16} />}
+                  onClick={() => setEditMode("nd")}
+                >
+                  Edit
+                </Button>
+              )
+            }
           >
-            <>
-              <InfoRow
-                label="Created By"
-                value={
-                  request?.createdByNd?.name || request?.createdByNd?.email
-                }
-              />
-              <InfoRow label="Tour Name" value={request?.tourName} />
-              <InfoRow label="Position Title" value={request?.positionTitle} />
-              <InfoRow
-                label="Hire Date"
-                value={
-                  request?.hireDate
-                    ? new Date(request.hireDate).toLocaleDateString()
-                    : null
-                }
-              />
-              <InfoRow
-                label="Event Rate"
-                value={request?.eventRate ? `$${request.eventRate}` : null}
-              />
-              <InfoRow
-                label="Day Rate"
-                value={request?.dayRate ? `$${request.dayRate}` : null}
-              />
-              <InfoRow
-                label="Worker Category"
-                value={
-                  request?.workerCategory === "W2"
-                    ? "W2 Employee"
-                    : request?.workerCategory === "1099"
-                    ? "1099 Contractor"
-                    : request?.workerCategory
-                }
-              />
-              <InfoRow
-                label="Hire Type"
-                value={
-                  request?.hireOrRehire === "new_hire"
-                    ? "New Hire"
-                    : request?.hireOrRehire === "rehire"
-                    ? "Rehire"
-                    : request?.hireOrRehire
-                }
-              />
-              {request?.notes && (
-                <InfoRow label="Notes" value={request.notes} />
-              )}
-            </>
+            {editMode === "nd" ? (
+              <form onSubmit={ndFormik.handleSubmit}>
+                <Grid container spacing={2}>
+                  <Grid size={12}>
+                    <CustomFormLabel>Tour Name *</CustomFormLabel>
+                    <CustomSelect
+                      name="tourName"
+                      fullWidth
+                      value={ndFormik.values.tourName}
+                      onChange={ndFormik.handleChange}
+                    >
+                      <MenuItem value="">Select Tour</MenuItem>
+                      {TOUR_NAMES.map((tour) => (
+                        <MenuItem key={tour.value} value={tour.value}>
+                          {tour.label}
+                        </MenuItem>
+                      ))}
+                    </CustomSelect>
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Position Title</CustomFormLabel>
+                    <CustomTextField
+                      name="positionTitle"
+                      fullWidth
+                      value={ndFormik.values.positionTitle}
+                      onChange={ndFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Hire Date *</CustomFormLabel>
+                    <CustomTextField
+                      name="hireDate"
+                      type="date"
+                      fullWidth
+                      value={ndFormik.values.hireDate}
+                      onChange={ndFormik.handleChange}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Event Rate</CustomFormLabel>
+                    <CustomTextField
+                      name="eventRate"
+                      fullWidth
+                      value={ndFormik.values.eventRate}
+                      onChange={ndFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Day Rate</CustomFormLabel>
+                    <CustomTextField
+                      name="dayRate"
+                      fullWidth
+                      value={ndFormik.values.dayRate}
+                      onChange={ndFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Worker Category *</CustomFormLabel>
+                    <CustomSelect
+                      name="workerCategory"
+                      fullWidth
+                      value={ndFormik.values.workerCategory}
+                      onChange={ndFormik.handleChange}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="1099">1099</MenuItem>
+                      <MenuItem value="W2">W2</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Hire Type *</CustomFormLabel>
+                    <CustomSelect
+                      name="hireOrRehire"
+                      fullWidth
+                      value={ndFormik.values.hireOrRehire}
+                      onChange={ndFormik.handleChange}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="hire">HIRE</MenuItem>
+                      <MenuItem value="rehire">REHIRE</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Notes</CustomFormLabel>
+                    <CustomTextField
+                      name="notes"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      value={ndFormik.values.notes}
+                      onChange={ndFormik.handleChange}
+                    />
+                  </Grid>
+                </Grid>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  mt={3}
+                  justifyContent="flex-end"
+                >
+                  <Button variant="outlined" onClick={() => setEditMode(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={submitting}
+                    startIcon={<IconDeviceFloppy size={18} />}
+                  >
+                    {submitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </Stack>
+              </form>
+            ) : (
+              <>
+                <InfoRow
+                  label="Created By"
+                  value={
+                    request?.createdByNd?.name || request?.createdByNd?.email
+                  }
+                />
+                <InfoRow label="Tour Name" value={request?.tourName} />
+                <InfoRow
+                  label="Position Title"
+                  value={request?.positionTitle}
+                />
+                <InfoRow
+                  label="Hire Date"
+                  value={
+                    request?.hireDate
+                      ? new Date(request.hireDate).toLocaleDateString()
+                      : null
+                  }
+                />
+                <InfoRow
+                  label="Event Rate"
+                  value={request?.eventRate ? `$${request.eventRate}` : null}
+                />
+                <InfoRow
+                  label="Day Rate"
+                  value={request?.dayRate ? `$${request.dayRate}` : null}
+                />
+                <InfoRow
+                  label="Worker Category"
+                  value={request?.workerCategory}
+                />
+                <InfoRow
+                  label="Hire Type"
+                  value={
+                    request?.hireOrRehire === "hire"
+                      ? "HIRE"
+                      : request?.hireOrRehire === "rehire"
+                      ? "REHIRE"
+                      : request?.hireOrRehire === "new_hire"
+                      ? "HIRE"
+                      : request?.hireOrRehire
+                  }
+                />
+                {request?.notes && (
+                  <InfoRow label="Notes" value={request.notes} />
+                )}
+              </>
+            )}
           </DashboardCard>
         </Grid>
 
-        {/* Read-only Candidate Data */}
+        {/* Candidate Data - Editable */}
         <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
             title="Candidate Information"
-            subtitle="Submitted by candidate"
+            subtitle={
+              request?.status === OnboardingStatus.WAITING_FOR_CANDIDATE
+                ? "Waiting for candidate - you can fill this out on their behalf"
+                : "Submitted by candidate"
+            }
+            action={
+              editMode !== "candidate" && (
+                <Button
+                  size="small"
+                  startIcon={<IconEdit size={16} />}
+                  onClick={() => setEditMode("candidate")}
+                >
+                  {request?.status === OnboardingStatus.WAITING_FOR_CANDIDATE
+                    ? "Fill for Candidate"
+                    : "Edit"}
+                </Button>
+              )
+            }
           >
-            <>
-              <InfoRow
-                label="Full Name"
-                value={`${request?.candidateFirstName} ${request?.candidateLastName}`}
-              />
-              <InfoRow label="Email" value={request?.candidateEmail} />
-              <InfoRow label="Phone" value={request?.candidatePhone} />
-              <InfoRow
-                label="Tax ID / SSN"
-                value={
-                  request?.taxIdNumber
-                    ? "***-**-" + request.taxIdNumber.slice(-4)
-                    : null
-                }
-              />
-              <InfoRow
-                label="Date of Birth"
-                value={
-                  request?.birthDate
-                    ? new Date(request.birthDate).toLocaleDateString()
-                    : null
-                }
-              />
-              <InfoRow
-                label="Marital Status"
-                value={
-                  request?.maritalStatusState
-                    ? request.maritalStatusState.charAt(0).toUpperCase() +
-                      request.maritalStatusState.slice(1)
-                    : null
-                }
-              />
-              <Divider sx={{ my: 2 }} />
-              <InfoRow label="Address Line 1" value={request?.addressLine1} />
-              <InfoRow label="Address Line 2" value={request?.addressLine2} />
-              <InfoRow
-                label="City, State ZIP"
-                value={
-                  request?.addressCity
-                    ? `${request.addressCity}, ${request.addressState} ${request.addressZipCode}`
-                    : null
-                }
-              />
-            </>
+            {editMode === "candidate" ? (
+              <form onSubmit={candidateFormik.handleSubmit}>
+                <Grid container spacing={2}>
+                  <Grid size={6}>
+                    <CustomFormLabel>First Name *</CustomFormLabel>
+                    <CustomTextField
+                      name="candidateFirstName"
+                      fullWidth
+                      value={candidateFormik.values.candidateFirstName}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Last Name *</CustomFormLabel>
+                    <CustomTextField
+                      name="candidateLastName"
+                      fullWidth
+                      value={candidateFormik.values.candidateLastName}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Email *</CustomFormLabel>
+                    <CustomTextField
+                      name="candidateEmail"
+                      type="email"
+                      fullWidth
+                      value={candidateFormik.values.candidateEmail}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Phone</CustomFormLabel>
+                    <CustomTextField
+                      name="candidatePhone"
+                      fullWidth
+                      value={candidateFormik.values.candidatePhone}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Tax ID / SSN</CustomFormLabel>
+                    <CustomTextField
+                      name="taxIdNumber"
+                      fullWidth
+                      value={candidateFormik.values.taxIdNumber}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>Date of Birth</CustomFormLabel>
+                    <CustomTextField
+                      name="birthDate"
+                      type="date"
+                      fullWidth
+                      value={candidateFormik.values.birthDate}
+                      onChange={candidateFormik.handleChange}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Marital Status</CustomFormLabel>
+                    <CustomSelect
+                      name="maritalStatusState"
+                      fullWidth
+                      value={candidateFormik.values.maritalStatusState}
+                      onChange={candidateFormik.handleChange}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      <MenuItem value="single">Single</MenuItem>
+                      <MenuItem value="married">Married</MenuItem>
+                      <MenuItem value="divorced">Divorced</MenuItem>
+                      <MenuItem value="widowed">Widowed</MenuItem>
+                    </CustomSelect>
+                  </Grid>
+                  <Grid size={12}>
+                    <Divider sx={{ my: 1 }} />
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Address Line 1</CustomFormLabel>
+                    <CustomTextField
+                      name="addressLine1"
+                      fullWidth
+                      value={candidateFormik.values.addressLine1}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <CustomFormLabel>Address Line 2</CustomFormLabel>
+                    <CustomTextField
+                      name="addressLine2"
+                      fullWidth
+                      value={candidateFormik.values.addressLine2}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={6}>
+                    <CustomFormLabel>City</CustomFormLabel>
+                    <CustomTextField
+                      name="addressCity"
+                      fullWidth
+                      value={candidateFormik.values.addressCity}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                  <Grid size={3}>
+                    <CustomFormLabel>State</CustomFormLabel>
+                    <CustomSelect
+                      name="addressState"
+                      fullWidth
+                      value={candidateFormik.values.addressState}
+                      onChange={candidateFormik.handleChange}
+                    >
+                      <MenuItem value="">Select</MenuItem>
+                      {US_STATES.map((state) => (
+                        <MenuItem key={state.value} value={state.value}>
+                          {state.label}
+                        </MenuItem>
+                      ))}
+                    </CustomSelect>
+                  </Grid>
+                  <Grid size={3}>
+                    <CustomFormLabel>ZIP Code</CustomFormLabel>
+                    <CustomTextField
+                      name="addressZipCode"
+                      fullWidth
+                      value={candidateFormik.values.addressZipCode}
+                      onChange={candidateFormik.handleChange}
+                    />
+                  </Grid>
+                </Grid>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  mt={3}
+                  justifyContent="flex-end"
+                >
+                  <Button variant="outlined" onClick={() => setEditMode(null)}>
+                    Cancel
+                  </Button>
+                  {request?.status ===
+                  OnboardingStatus.WAITING_FOR_CANDIDATE ? (
+                    <Button
+                      variant="contained"
+                      disabled={submitting}
+                      onClick={handleFillForCandidate}
+                      startIcon={<IconCheck size={18} />}
+                      color="success"
+                    >
+                      {submitting ? "Saving..." : "Complete for Candidate"}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={submitting}
+                      startIcon={<IconDeviceFloppy size={18} />}
+                    >
+                      {submitting ? "Saving..." : "Save Changes"}
+                    </Button>
+                  )}
+                </Stack>
+              </form>
+            ) : (
+              <>
+                <InfoRow
+                  label="Full Name"
+                  value={`${request?.candidateFirstName} ${request?.candidateLastName}`}
+                />
+                <InfoRow label="Email" value={request?.candidateEmail} />
+                <InfoRow label="Phone" value={request?.candidatePhone} />
+                <InfoRow
+                  label="Tax ID / SSN"
+                  value={
+                    request?.taxIdNumber
+                      ? "***-**-" + request.taxIdNumber.slice(-4)
+                      : null
+                  }
+                />
+                <InfoRow
+                  label="Date of Birth"
+                  value={
+                    request?.birthDate
+                      ? new Date(request.birthDate).toLocaleDateString()
+                      : null
+                  }
+                />
+                <InfoRow
+                  label="Marital Status"
+                  value={
+                    request?.maritalStatusState
+                      ? request.maritalStatusState.charAt(0).toUpperCase() +
+                        request.maritalStatusState.slice(1)
+                      : null
+                  }
+                />
+                <Divider sx={{ my: 2 }} />
+                <InfoRow label="Address Line 1" value={request?.addressLine1} />
+                <InfoRow label="Address Line 2" value={request?.addressLine2} />
+                <InfoRow
+                  label="City, State ZIP"
+                  value={
+                    request?.addressCity
+                      ? `${request.addressCity}, ${request.addressState} ${request.addressZipCode}`
+                      : null
+                  }
+                />
+              </>
+            )}
           </DashboardCard>
         </Grid>
 
