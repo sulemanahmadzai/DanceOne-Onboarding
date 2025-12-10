@@ -69,7 +69,8 @@ export async function POST(request: Request) {
         tourName: body.tourName,
         positionTitle: body.positionTitle || null,
         hireDate: body.hireDate,
-        salaryEventRate: body.salaryEventRate || null,
+        eventRate: body.eventRate || null,
+        dayRate: body.dayRate || null,
         workerCategory: body.workerCategory,
         hireOrRehire: body.hireOrRehire,
         notes: body.notes || null,
@@ -78,7 +79,9 @@ export async function POST(request: Request) {
 
     // Generate a secure token for the candidate
     const token = crypto.randomBytes(32).toString("hex");
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // Token expires in 7 days
 
@@ -91,7 +94,7 @@ export async function POST(request: Request) {
 
     // Send email to candidate
     const candidateLink = `${process.env.NEXT_PUBLIC_APP_URL}/candidate/${token}`;
-    
+
     try {
       const emailContent = getCandidateInvitationEmail({
         candidateFirstName: body.candidateFirstName,
@@ -124,4 +127,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

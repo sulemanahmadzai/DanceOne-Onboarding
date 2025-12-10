@@ -40,6 +40,13 @@ export async function GET() {
             email: true,
           },
         },
+        assignedHr: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     });
 
@@ -52,9 +59,8 @@ export async function GET() {
       waitingForHR: requests.filter(
         (r) => r.status === OnboardingStatus.WAITING_FOR_HR
       ).length,
-      completed: requests.filter(
-        (r) => r.status === OnboardingStatus.COMPLETED
-      ).length,
+      completed: requests.filter((r) => r.status === OnboardingStatus.COMPLETED)
+        .length,
     };
 
     return NextResponse.json({ requests, stats });
@@ -66,4 +72,3 @@ export async function GET() {
     );
   }
 }
-

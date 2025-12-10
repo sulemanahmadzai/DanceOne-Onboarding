@@ -28,6 +28,22 @@ export async function GET() {
     const requests = await db.query.onboardingRequests.findMany({
       where: eq(onboardingRequests.createdByNdId, dbUser.id),
       orderBy: [desc(onboardingRequests.createdAt)],
+      with: {
+        createdByNd: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedHr: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     // Calculate stats
@@ -39,9 +55,8 @@ export async function GET() {
       waitingForHR: requests.filter(
         (r) => r.status === OnboardingStatus.WAITING_FOR_HR
       ).length,
-      completed: requests.filter(
-        (r) => r.status === OnboardingStatus.COMPLETED
-      ).length,
+      completed: requests.filter((r) => r.status === OnboardingStatus.COMPLETED)
+        .length,
     };
 
     return NextResponse.json({ requests, stats });
@@ -53,4 +68,3 @@ export async function GET() {
     );
   }
 }
-

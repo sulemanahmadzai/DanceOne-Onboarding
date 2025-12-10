@@ -37,9 +37,26 @@ interface OnboardingRequest {
   candidateLastName: string;
   candidateEmail: string;
   tourName: string | null;
+  positionTitle: string | null;
+  hireDate: string | null;
+  addressState: string | null;
+  hireOrRehire: string | null;
+  workerCategory: string | null;
+  eventRate: string | null;
+  dayRate: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
+  createdByNd?: {
+    id: number;
+    name: string | null;
+    email: string;
+  };
+  assignedHr?: {
+    id: number;
+    name: string | null;
+    email: string;
+  } | null;
 }
 
 interface DashboardStats {
@@ -225,19 +242,28 @@ export default function NDDashboardPage() {
 
       {/* Requests Table */}
       <DashboardCard
-        title="My Onboarding Requests"
-        subtitle="All hire requests you have created"
+        title="All Onboarding Requests"
+        subtitle={`Showing ${requests.length} requests`}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 1400 }}>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Candidate Name</TableCell>
-                <TableCell>Email</TableCell>
                 <TableCell>Tour Name</TableCell>
+                <TableCell>Created by ND</TableCell>
+                <TableCell>Candidate Name</TableCell>
+                <TableCell>Job Title</TableCell>
+                <TableCell>Start Date</TableCell>
+                <TableCell>State</TableCell>
+                <TableCell>Hire Type</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Event Rate</TableCell>
+                <TableCell>Day Rate</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Assigned HR</TableCell>
+                <TableCell>Last Updated</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Created</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -245,7 +271,7 @@ export default function NDDashboardPage() {
               {loading ? (
                 [...Array(5)].map((_, index) => (
                   <TableRow key={index}>
-                    {[...Array(7)].map((_, cellIndex) => (
+                    {[...Array(16)].map((_, cellIndex) => (
                       <TableCell key={cellIndex}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -254,10 +280,10 @@ export default function NDDashboardPage() {
                 ))
               ) : requests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">
-                      No onboarding requests yet. Click &quot;New Hire Request&quot; to
-                      create one.
+                      No onboarding requests yet. Click &quot;New Hire
+                      Request&quot; to create one.
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -265,17 +291,48 @@ export default function NDDashboardPage() {
                 requests.map((request) => (
                   <TableRow key={request.id} hover>
                     <TableCell>#{request.id}</TableCell>
+                    <TableCell>{request.tourName || "-"}</TableCell>
+                    <TableCell>
+                      {request.createdByNd?.name ||
+                        request.createdByNd?.email ||
+                        "-"}
+                    </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>
                         {request.candidateFirstName} {request.candidateLastName}
                       </Typography>
                     </TableCell>
-                    <TableCell>{request.candidateEmail}</TableCell>
-                    <TableCell>{request.tourName || "-"}</TableCell>
-                    <TableCell>{getStatusChip(request.status)}</TableCell>
+                    <TableCell>{request.positionTitle || "-"}</TableCell>
                     <TableCell>
-                      {new Date(request.createdAt).toLocaleDateString()}
+                      {request.hireDate
+                        ? new Date(request.hireDate).toLocaleDateString()
+                        : "-"}
                     </TableCell>
+                    <TableCell>{request.addressState || "-"}</TableCell>
+                    <TableCell>
+                      {request.hireOrRehire === "new_hire"
+                        ? "New Hire"
+                        : request.hireOrRehire === "rehire"
+                        ? "Rehire"
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{request.workerCategory || "-"}</TableCell>
+                    <TableCell>
+                      {request.eventRate ? `$${request.eventRate}` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {request.dayRate ? `$${request.dayRate}` : "-"}
+                    </TableCell>
+                    <TableCell>{request.candidateEmail}</TableCell>
+                    <TableCell>
+                      {request.assignedHr?.name ||
+                        request.assignedHr?.email ||
+                        "-"}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(request.updatedAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="View Details">
                         <IconButton
@@ -298,4 +355,3 @@ export default function NDDashboardPage() {
     </Box>
   );
 }
-

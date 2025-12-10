@@ -2,6 +2,7 @@
 import {
   Box,
   Typography,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -34,6 +35,7 @@ import {
   IconSearch,
   IconUserPlus,
   IconFileExport,
+  IconPlus,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
@@ -44,6 +46,13 @@ interface OnboardingRequest {
   candidateLastName: string;
   candidateEmail: string;
   tourName: string | null;
+  positionTitle: string | null;
+  hireDate: string | null;
+  addressState: string | null;
+  hireOrRehire: string | null;
+  workerCategory: string | null;
+  eventRate: string | null;
+  dayRate: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -155,7 +164,9 @@ const StatCard = ({
 export default function AdminDashboardPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<OnboardingRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<OnboardingRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<OnboardingRequest[]>(
+    []
+  );
   const [stats, setStats] = useState<DashboardStats>({
     total: 0,
     waitingForCandidate: 0,
@@ -178,15 +189,17 @@ export default function AdminDashboardPage() {
           const data = await response.json();
           setRequests(data.requests || []);
           setFilteredRequests(data.requests || []);
-          setStats(data.stats || {
-            total: 0,
-            waitingForCandidate: 0,
-            waitingForHR: 0,
-            completed: 0,
-            totalUsers: 0,
-            totalND: 0,
-            totalHR: 0,
-          });
+          setStats(
+            data.stats || {
+              total: 0,
+              waitingForCandidate: 0,
+              waitingForHR: 0,
+              completed: 0,
+              totalUsers: 0,
+              totalND: 0,
+              totalHR: 0,
+            }
+          );
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -249,6 +262,19 @@ export default function AdminDashboardPage() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={() => router.push("/nd/new-request")}
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
+              },
+            }}
+          >
+            New Hire Request
+          </Button>
           <Tooltip title="Invite New User">
             <IconButton
               onClick={() => router.push("/admin/invite")}
@@ -294,7 +320,9 @@ export default function AdminDashboardPage() {
             icon={IconClockHour4}
             color="#FFAE1F"
             loading={loading}
-            onClick={() => setStatusFilter(OnboardingStatus.WAITING_FOR_CANDIDATE)}
+            onClick={() =>
+              setStatusFilter(OnboardingStatus.WAITING_FOR_CANDIDATE)
+            }
             active={statusFilter === OnboardingStatus.WAITING_FOR_CANDIDATE}
           />
         </Grid>
@@ -327,7 +355,11 @@ export default function AdminDashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">
                     Total Users
@@ -344,7 +376,11 @@ export default function AdminDashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">
                     National Directors
@@ -361,7 +397,11 @@ export default function AdminDashboardPage() {
         <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
                 <Box>
                   <Typography variant="subtitle2" color="textSecondary">
                     HR Managers
@@ -426,18 +466,25 @@ export default function AdminDashboardPage() {
         title="All Onboarding Requests"
         subtitle={`Showing ${filteredRequests.length} of ${requests.length} requests`}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 1400 }}>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Candidate Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Created By (ND)</TableCell>
-                <TableCell>Assigned HR</TableCell>
                 <TableCell>Tour Name</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell>Created by ND</TableCell>
+                <TableCell>Candidate Name</TableCell>
+                <TableCell>Job Title</TableCell>
+                <TableCell>Start Date</TableCell>
+                <TableCell>State</TableCell>
+                <TableCell>Hire Type</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Event Rate</TableCell>
+                <TableCell>Day Rate</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Assigned HR</TableCell>
                 <TableCell>Last Updated</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -445,7 +492,7 @@ export default function AdminDashboardPage() {
               {loading ? (
                 [...Array(5)].map((_, index) => (
                   <TableRow key={index}>
-                    {[...Array(9)].map((_, cellIndex) => (
+                    {[...Array(16)].map((_, cellIndex) => (
                       <TableCell key={cellIndex}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -454,7 +501,7 @@ export default function AdminDashboardPage() {
                 ))
               ) : filteredRequests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">
                       No onboarding requests found.
                     </Typography>
@@ -464,32 +511,55 @@ export default function AdminDashboardPage() {
                 filteredRequests.map((request) => (
                   <TableRow key={request.id} hover>
                     <TableCell>#{request.id}</TableCell>
+                    <TableCell>{request.tourName || "-"}</TableCell>
+                    <TableCell>
+                      {request.createdByNd?.name ||
+                        request.createdByNd?.email ||
+                        "-"}
+                    </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>
                         {request.candidateFirstName} {request.candidateLastName}
                       </Typography>
                     </TableCell>
+                    <TableCell>{request.positionTitle || "-"}</TableCell>
+                    <TableCell>
+                      {request.hireDate
+                        ? new Date(request.hireDate).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{request.addressState || "-"}</TableCell>
+                    <TableCell>
+                      {request.hireOrRehire === "new_hire"
+                        ? "New Hire"
+                        : request.hireOrRehire === "rehire"
+                        ? "Rehire"
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{request.workerCategory || "-"}</TableCell>
+                    <TableCell>
+                      {request.eventRate ? `$${request.eventRate}` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {request.dayRate ? `$${request.dayRate}` : "-"}
+                    </TableCell>
                     <TableCell>{request.candidateEmail}</TableCell>
                     <TableCell>
-                      <Typography variant="body2">
-                        {request.createdByNd?.name || request.createdByNd?.email || "-"}
-                      </Typography>
+                      {request.assignedHr?.name ||
+                        request.assignedHr?.email ||
+                        "-"}
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {request.assignedHr?.name || request.assignedHr?.email || "-"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{request.tourName || "-"}</TableCell>
-                    <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell>
                       {new Date(request.updatedAt).toLocaleDateString()}
                     </TableCell>
+                    <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="View Details">
                         <IconButton
                           size="small"
-                          onClick={() => router.push(`/hr/request/${request.id}`)}
+                          onClick={() =>
+                            router.push(`/hr/request/${request.id}`)
+                          }
                           color={
                             request.status === OnboardingStatus.WAITING_FOR_HR
                               ? "primary"
@@ -510,5 +580,3 @@ export default function AdminDashboardPage() {
     </Box>
   );
 }
-
-

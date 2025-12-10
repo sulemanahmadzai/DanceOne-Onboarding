@@ -32,6 +32,7 @@ import {
   IconAlertCircle,
   IconSearch,
   IconFileExport,
+  IconPlus,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
@@ -42,13 +43,26 @@ interface OnboardingRequest {
   candidateLastName: string;
   candidateEmail: string;
   tourName: string | null;
+  positionTitle: string | null;
+  hireDate: string | null;
+  addressState: string | null;
+  hireOrRehire: string | null;
+  workerCategory: string | null;
+  eventRate: string | null;
+  dayRate: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
   createdByNd?: {
+    id: number;
     name: string | null;
     email: string;
   };
+  assignedHr?: {
+    id: number;
+    name: string | null;
+    email: string;
+  } | null;
 }
 
 interface DashboardStats {
@@ -234,19 +248,28 @@ export default function HRDashboardPage() {
             Manage all onboarding requests
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<IconFileExport size={18} />}
-          onClick={() => router.push("/hr/export")}
-          sx={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            "&:hover": {
-              background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
-            },
-          }}
-        >
-          Export Records
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={() => router.push("/nd/new-request")}
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
+              },
+            }}
+          >
+            New Hire Request
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileExport size={18} />}
+            onClick={() => router.push("/hr/export")}
+          >
+            Export Records
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Stats Cards */}
@@ -348,17 +371,25 @@ export default function HRDashboardPage() {
         title="All Onboarding Requests"
         subtitle={`Showing ${filteredRequests.length} of ${requests.length} requests`}
       >
-        <TableContainer>
-          <Table>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table sx={{ minWidth: 1400 }}>
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Candidate Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>ND</TableCell>
                 <TableCell>Tour Name</TableCell>
-                <TableCell>Status</TableCell>
+                <TableCell>Created by ND</TableCell>
+                <TableCell>Candidate Name</TableCell>
+                <TableCell>Job Title</TableCell>
+                <TableCell>Start Date</TableCell>
+                <TableCell>State</TableCell>
+                <TableCell>Hire Type</TableCell>
+                <TableCell>Category</TableCell>
+                <TableCell>Event Rate</TableCell>
+                <TableCell>Day Rate</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Assigned HR</TableCell>
                 <TableCell>Last Updated</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -366,7 +397,7 @@ export default function HRDashboardPage() {
               {loading ? (
                 [...Array(5)].map((_, index) => (
                   <TableRow key={index}>
-                    {[...Array(8)].map((_, cellIndex) => (
+                    {[...Array(16)].map((_, cellIndex) => (
                       <TableCell key={cellIndex}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -375,7 +406,7 @@ export default function HRDashboardPage() {
                 ))
               ) : filteredRequests.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={16} align="center" sx={{ py: 4 }}>
                     <Typography color="textSecondary">
                       No onboarding requests found.
                     </Typography>
@@ -385,20 +416,48 @@ export default function HRDashboardPage() {
                 filteredRequests.map((request) => (
                   <TableRow key={request.id} hover>
                     <TableCell>#{request.id}</TableCell>
+                    <TableCell>{request.tourName || "-"}</TableCell>
+                    <TableCell>
+                      {request.createdByNd?.name ||
+                        request.createdByNd?.email ||
+                        "-"}
+                    </TableCell>
                     <TableCell>
                       <Typography fontWeight={500}>
                         {request.candidateFirstName} {request.candidateLastName}
                       </Typography>
                     </TableCell>
+                    <TableCell>{request.positionTitle || "-"}</TableCell>
+                    <TableCell>
+                      {request.hireDate
+                        ? new Date(request.hireDate).toLocaleDateString()
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{request.addressState || "-"}</TableCell>
+                    <TableCell>
+                      {request.hireOrRehire === "new_hire"
+                        ? "New Hire"
+                        : request.hireOrRehire === "rehire"
+                        ? "Rehire"
+                        : "-"}
+                    </TableCell>
+                    <TableCell>{request.workerCategory || "-"}</TableCell>
+                    <TableCell>
+                      {request.eventRate ? `$${request.eventRate}` : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {request.dayRate ? `$${request.dayRate}` : "-"}
+                    </TableCell>
                     <TableCell>{request.candidateEmail}</TableCell>
                     <TableCell>
-                      {request.createdByNd?.name || request.createdByNd?.email || "-"}
+                      {request.assignedHr?.name ||
+                        request.assignedHr?.email ||
+                        "-"}
                     </TableCell>
-                    <TableCell>{request.tourName || "-"}</TableCell>
-                    <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell>
                       {new Date(request.updatedAt).toLocaleDateString()}
                     </TableCell>
+                    <TableCell>{getStatusChip(request.status)}</TableCell>
                     <TableCell align="right">
                       <Tooltip title="View / Edit">
                         <IconButton
@@ -426,4 +485,3 @@ export default function HRDashboardPage() {
     </Box>
   );
 }
-

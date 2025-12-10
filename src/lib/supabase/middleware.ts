@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Role-based route access configuration
 const ROLE_ROUTES: Record<string, string[]> = {
   nd: ["/nd"],
-  hr: ["/hr"],
+  hr: ["/hr", "/nd/new-request"], // HR can also create new hire requests
   admin: ["/nd", "/hr", "/admin"], // Admin can access all routes
 };
 
@@ -49,7 +49,12 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Allow public routes
-  const publicRoutes = ["/auth/login", "/auth/accept-invite", "/candidate", "/api"];
+  const publicRoutes = [
+    "/auth/login",
+    "/auth/accept-invite",
+    "/candidate",
+    "/api",
+  ];
   const isPublicRoute = publicRoutes.some(
     (route) => pathname.startsWith(route) || pathname === "/"
   );
@@ -66,7 +71,7 @@ export async function updateSession(request: NextRequest) {
     // Get user role from cookie, but verify it matches the current user
     const cachedRole = request.cookies.get("user_role")?.value;
     const cachedUserId = request.cookies.get("user_role_id")?.value;
-    
+
     let userRole = cachedRole;
 
     // If no cached role or user ID changed, fetch fresh role
@@ -132,4 +137,3 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
-

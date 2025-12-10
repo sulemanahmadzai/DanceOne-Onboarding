@@ -5,14 +5,19 @@ import {
   Button,
   Grid,
   Stack,
-  Chip,
-  Divider,
   Alert,
+  Stepper,
+  Step,
+  StepLabel,
+  Divider,
+  Chip,
   Skeleton,
+  Card,
+  CardContent,
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
   IconArrowLeft,
@@ -22,6 +27,18 @@ import {
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
+
+// Helper to get dashboard path based on role
+const getDashboardPath = (role: string) => {
+  switch (role) {
+    case "admin":
+      return "/admin/dashboard";
+    case "hr":
+      return "/hr/dashboard";
+    default:
+      return "/nd/dashboard";
+  }
+};
 
 interface RequestDetails {
   id: number;
@@ -34,13 +51,32 @@ interface RequestDetails {
   tourName: string | null;
   positionTitle: string | null;
   hireDate: string | null;
-  salaryEventRate: string | null;
+  eventRate: string | null;
+  dayRate: string | null;
   workerCategory: string | null;
   hireOrRehire: string | null;
   notes: string | null;
+  taxIdNumber: string | null;
+  birthDate: string | null;
+  maritalStatusState: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressZipCode: string | null;
+  changeEffectiveDate: string | null;
+  companyCode: string | null;
+  homeDepartment: string | null;
+  sui: string | null;
+  willWorkerCompleteI9: string | null;
+  eVerifyWorkLocation: string | null;
   createdAt: string;
   updatedAt: string;
   candidateLink?: string;
+  createdByNd?: {
+    name: string | null;
+    email: string;
+  };
 }
 
 const getStatusChip = (status: string) => {
@@ -88,15 +124,26 @@ export default function RequestDetailPage() {
   const [copied, setCopied] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [userRole, setUserRole] = useState<string>("nd");
 
   useEffect(() => {
-    const fetchRequest = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/onboarding/${params.id}`);
-        if (!response.ok) {
+        // Fetch user role and request data in parallel
+        const [roleResponse, requestResponse] = await Promise.all([
+          fetch("/api/auth/user-role"),
+          fetch(`/api/onboarding/${params.id}`),
+        ]);
+
+        if (roleResponse.ok) {
+          const roleData = await roleResponse.json();
+          setUserRole(roleData.role || "nd");
+        }
+
+        if (!requestResponse.ok) {
           throw new Error("Failed to fetch request");
         }
-        const data = await response.json();
+        const data = await requestResponse.json();
         setRequest(data);
       } catch (err: any) {
         setError(err.message);
@@ -105,7 +152,7 @@ export default function RequestDetailPage() {
       }
     };
 
-    fetchRequest();
+    fetchData();
   }, [params.id]);
 
   const handleCopyLink = () => {
@@ -119,9 +166,12 @@ export default function RequestDetailPage() {
   const handleResendEmail = async () => {
     setResending(true);
     try {
-      const response = await fetch(`/api/onboarding/${params.id}/resend-email`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/onboarding/${params.id}/resend-email`,
+        {
+          method: "POST",
+        }
+      );
       if (response.ok) {
         setResendSuccess(true);
         setTimeout(() => setResendSuccess(false), 3000);
@@ -130,6 +180,21 @@ export default function RequestDetailPage() {
       console.error("Error resending email:", err);
     } finally {
       setResending(false);
+    }
+  };
+
+  const getActiveStep = () => {
+    if (!request) return 0;
+    switch (request.status) {
+      case OnboardingStatus.ND_DRAFT:
+      case OnboardingStatus.WAITING_FOR_CANDIDATE:
+        return 1;
+      case OnboardingStatus.WAITING_FOR_HR:
+        return 2;
+      case OnboardingStatus.COMPLETED:
+        return 3;
+      default:
+        return 0;
     }
   };
 
@@ -149,7 +214,7 @@ export default function RequestDetailPage() {
         <Button
           variant="text"
           startIcon={<IconArrowLeft size={18} />}
-          onClick={() => router.push("/nd/dashboard")}
+          onClick={() => router.push(getDashboardPath(userRole))}
           sx={{ mt: 2 }}
         >
           Back to Dashboard
@@ -171,7 +236,7 @@ export default function RequestDetailPage() {
           <Button
             variant="text"
             startIcon={<IconArrowLeft size={18} />}
-            onClick={() => router.push("/nd/dashboard")}
+            onClick={() => router.push(getDashboardPath(userRole))}
           >
             Back
           </Button>
@@ -187,6 +252,23 @@ export default function RequestDetailPage() {
         {getStatusChip(request.status)}
       </Stack>
 
+      {/* Progress Stepper */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Stepper activeStep={getActiveStep()} alternativeLabel>
+            <Step completed={getActiveStep() > 0}>
+              <StepLabel>ND Form</StepLabel>
+            </Step>
+            <Step completed={getActiveStep() > 1}>
+              <StepLabel>Candidate Form</StepLabel>
+            </Step>
+            <Step completed={getActiveStep() > 2}>
+              <StepLabel>HR Form</StepLabel>
+            </Step>
+          </Stepper>
+        </CardContent>
+      </Card>
+
       {/* Candidate Link Section */}
       {request.status === OnboardingStatus.WAITING_FOR_CANDIDATE &&
         request.candidateLink && (
@@ -197,11 +279,7 @@ export default function RequestDetailPage() {
               <Stack direction="row" spacing={1}>
                 <Tooltip title={copied ? "Copied!" : "Copy Link"}>
                   <IconButton size="small" onClick={handleCopyLink}>
-                    {copied ? (
-                      <IconCheck size={18} />
-                    ) : (
-                      <IconCopy size={18} />
-                    )}
+                    {copied ? <IconCheck size={18} /> : <IconCopy size={18} />}
                   </IconButton>
                 </Tooltip>
                 <Button
@@ -222,31 +300,19 @@ export default function RequestDetailPage() {
         )}
 
       <Grid container spacing={3}>
-        {/* Candidate Information */}
+        {/* ND Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <DashboardCard
-            title="Candidate Information"
-            subtitle="Basic candidate details"
+            title="ND Information"
+            subtitle="Submitted by National Director"
           >
             <>
               <InfoRow
-                label="Full Name"
-                value={`${request.candidateFirstName} ${request.candidateLastName}`}
+                label="Created By"
+                value={
+                  request.createdByNd?.name || request.createdByNd?.email || "-"
+                }
               />
-              <InfoRow label="Email" value={request.candidateEmail} />
-              <InfoRow label="Phone" value={request.candidatePhone} />
-              <InfoRow
-                label="State of Residence"
-                value={request.stateOfResidence}
-              />
-            </>
-          </DashboardCard>
-        </Grid>
-
-        {/* Job Details */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DashboardCard title="Job Details" subtitle="Position information">
-            <>
               <InfoRow label="Tour Name" value={request.tourName} />
               <InfoRow label="Position Title" value={request.positionTitle} />
               <InfoRow
@@ -258,10 +324,12 @@ export default function RequestDetailPage() {
                 }
               />
               <InfoRow
-                label="Salary / Event Rate"
-                value={
-                  request.salaryEventRate ? `$${request.salaryEventRate}` : null
-                }
+                label="Event Rate"
+                value={request.eventRate ? `$${request.eventRate}` : null}
+              />
+              <InfoRow
+                label="Day Rate"
+                value={request.dayRate ? `$${request.dayRate}` : null}
               />
               <InfoRow
                 label="Worker Category"
@@ -283,36 +351,124 @@ export default function RequestDetailPage() {
                     : request.hireOrRehire
                 }
               />
+              {request.notes && <InfoRow label="Notes" value={request.notes} />}
             </>
           </DashboardCard>
         </Grid>
 
-        {/* Notes */}
-        {request.notes && (
-          <Grid size={12}>
-            <DashboardCard title="Notes" subtitle="Additional information">
-              <Typography>{request.notes}</Typography>
-            </DashboardCard>
-          </Grid>
-        )}
-
-        {/* Timeline */}
-        <Grid size={12}>
-          <DashboardCard title="Timeline" subtitle="Request history">
+        {/* Candidate Information */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DashboardCard
+            title="Candidate Information"
+            subtitle="Submitted by candidate"
+          >
             <>
               <InfoRow
-                label="Created"
-                value={new Date(request.createdAt).toLocaleString()}
+                label="Full Name"
+                value={`${request.candidateFirstName} ${request.candidateLastName}`}
+              />
+              <InfoRow label="Email" value={request.candidateEmail} />
+              <InfoRow label="Phone" value={request.candidatePhone} />
+              <InfoRow
+                label="Tax ID / SSN"
+                value={
+                  request.taxIdNumber
+                    ? "***-**-" + request.taxIdNumber.slice(-4)
+                    : null
+                }
               />
               <InfoRow
-                label="Last Updated"
-                value={new Date(request.updatedAt).toLocaleString()}
+                label="Date of Birth"
+                value={
+                  request.birthDate
+                    ? new Date(request.birthDate).toLocaleDateString()
+                    : null
+                }
+              />
+              <InfoRow
+                label="Marital Status"
+                value={
+                  request.maritalStatusState
+                    ? request.maritalStatusState.charAt(0).toUpperCase() +
+                      request.maritalStatusState.slice(1)
+                    : null
+                }
+              />
+              <Divider sx={{ my: 2 }} />
+              <InfoRow label="Address Line 1" value={request.addressLine1} />
+              <InfoRow label="Address Line 2" value={request.addressLine2} />
+              <InfoRow
+                label="City, State ZIP"
+                value={
+                  request.addressCity
+                    ? `${request.addressCity}, ${request.addressState} ${request.addressZipCode}`
+                    : null
+                }
               />
             </>
+          </DashboardCard>
+        </Grid>
+
+        {/* HR Information */}
+        <Grid size={12}>
+          <DashboardCard
+            title="HR Details - ADP Information"
+            subtitle={
+              request.status === OnboardingStatus.COMPLETED
+                ? "Completed"
+                : request.status === OnboardingStatus.WAITING_FOR_HR
+                ? "Waiting for HR to complete"
+                : "Waiting for candidate to submit their information"
+            }
+          >
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow
+                  label="Change Effective Date"
+                  value={
+                    request.changeEffectiveDate
+                      ? new Date(
+                          request.changeEffectiveDate
+                        ).toLocaleDateString()
+                      : null
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow label="Company Code" value={request.companyCode} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow
+                  label="Home Department"
+                  value={request.homeDepartment}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow
+                  label="SUI (State Unemployment Insurance)"
+                  value={request.sui}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow
+                  label="Will Worker Complete I-9?"
+                  value={
+                    request.willWorkerCompleteI9
+                      ? request.willWorkerCompleteI9.toUpperCase()
+                      : null
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <InfoRow
+                  label="E-Verify Work Location"
+                  value={request.eVerifyWorkLocation}
+                />
+              </Grid>
+            </Grid>
           </DashboardCard>
         </Grid>
       </Grid>
     </Box>
   );
 }
-

@@ -81,12 +81,16 @@ const US_STATES = [
 ];
 
 const validationSchema = Yup.object({
-  changeEffectiveDate: Yup.string().required("Change effective date is required"),
+  changeEffectiveDate: Yup.string().required(
+    "Change effective date is required"
+  ),
   companyCode: Yup.string().required("Company code is required"),
   homeDepartment: Yup.string().required("Home department is required"),
   sui: Yup.string().required("SUI is required"),
   willWorkerCompleteI9: Yup.string().required("I-9 completion is required"),
-  eVerifyWorkLocation: Yup.string().required("E-Verify work location is required"),
+  eVerifyWorkLocation: Yup.string().required(
+    "E-Verify work location is required"
+  ),
 });
 
 interface RequestDetails {
@@ -100,7 +104,8 @@ interface RequestDetails {
   tourName: string | null;
   positionTitle: string | null;
   hireDate: string | null;
-  salaryEventRate: string | null;
+  eventRate: string | null;
+  dayRate: string | null;
   workerCategory: string | null;
   hireOrRehire: string | null;
   notes: string | null;
@@ -162,6 +167,18 @@ const getStatusChip = (status: string) => {
   return <Chip label={config.label} color={config.color} />;
 };
 
+// Helper to get dashboard path based on role
+const getDashboardPath = (role: string) => {
+  switch (role) {
+    case "admin":
+      return "/admin/dashboard";
+    case "nd":
+      return "/nd/dashboard";
+    default:
+      return "/hr/dashboard";
+  }
+};
+
 export default function HRRequestPage() {
   const router = useRouter();
   const params = useParams();
@@ -170,15 +187,26 @@ export default function HRRequestPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string>("hr");
 
   useEffect(() => {
-    const fetchRequest = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`/api/onboarding/${params.id}`);
-        if (!response.ok) {
+        // Fetch user role and request data in parallel
+        const [roleResponse, requestResponse] = await Promise.all([
+          fetch("/api/auth/user-role"),
+          fetch(`/api/onboarding/${params.id}`),
+        ]);
+
+        if (roleResponse.ok) {
+          const roleData = await roleResponse.json();
+          setUserRole(roleData.role || "hr");
+        }
+
+        if (!requestResponse.ok) {
           throw new Error("Failed to fetch request");
         }
-        const data = await response.json();
+        const data = await requestResponse.json();
         setRequest(data);
       } catch (err: any) {
         setError(err.message);
@@ -187,7 +215,7 @@ export default function HRRequestPage() {
       }
     };
 
-    fetchRequest();
+    fetchData();
   }, [params.id]);
 
   const formik = useFormik({
@@ -206,11 +234,14 @@ export default function HRRequestPage() {
       setError("");
 
       try {
-        const response = await fetch(`/api/onboarding/${params.id}/hr-complete`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        });
+        const response = await fetch(
+          `/api/onboarding/${params.id}/hr-complete`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(values),
+          }
+        );
 
         const data = await response.json();
 
@@ -261,7 +292,7 @@ export default function HRRequestPage() {
         <Button
           variant="text"
           startIcon={<IconArrowLeft size={18} />}
-          onClick={() => router.push("/hr/dashboard")}
+          onClick={() => router.push(getDashboardPath(userRole))}
           sx={{ mt: 2 }}
         >
           Back to Dashboard
@@ -286,7 +317,7 @@ export default function HRRequestPage() {
           <Button
             variant="text"
             startIcon={<IconArrowLeft size={18} />}
-            onClick={() => router.push("/hr/dashboard")}
+            onClick={() => router.push(getDashboardPath(userRole))}
           >
             Back
           </Button>
@@ -320,12 +351,9 @@ export default function HRRequestPage() {
       </Card>
 
       {success && (
-        <Alert
-          severity="success"
-          sx={{ mb: 3 }}
-          icon={<IconCheck size={20} />}
-        >
-          Onboarding completed successfully! This record is now ready for export.
+        <Alert severity="success" sx={{ mb: 3 }} icon={<IconCheck size={20} />}>
+          Onboarding completed successfully! This record is now ready for
+          export.
         </Alert>
       )}
 
@@ -360,12 +388,12 @@ export default function HRRequestPage() {
                 }
               />
               <InfoRow
-                label="Salary / Event Rate"
-                value={
-                  request?.salaryEventRate
-                    ? `$${request.salaryEventRate}`
-                    : null
-                }
+                label="Event Rate"
+                value={request?.eventRate ? `$${request.eventRate}` : null}
+              />
+              <InfoRow
+                label="Day Rate"
+                value={request?.dayRate ? `$${request.dayRate}` : null}
               />
               <InfoRow
                 label="Worker Category"
@@ -387,7 +415,9 @@ export default function HRRequestPage() {
                     : request?.hireOrRehire
                 }
               />
-              {request?.notes && <InfoRow label="Notes" value={request.notes} />}
+              {request?.notes && (
+                <InfoRow label="Notes" value={request.notes} />
+              )}
             </>
           </DashboardCard>
         </Grid>
@@ -407,7 +437,11 @@ export default function HRRequestPage() {
               <InfoRow label="Phone" value={request?.candidatePhone} />
               <InfoRow
                 label="Tax ID / SSN"
-                value={request?.taxIdNumber ? "***-**-" + request.taxIdNumber.slice(-4) : null}
+                value={
+                  request?.taxIdNumber
+                    ? "***-**-" + request.taxIdNumber.slice(-4)
+                    : null
+                }
               />
               <InfoRow
                 label="Date of Birth"
@@ -523,7 +557,9 @@ export default function HRRequestPage() {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <CustomFormLabel htmlFor="sui">SUI (State Unemployment Insurance) *</CustomFormLabel>
+                  <CustomFormLabel htmlFor="sui">
+                    SUI (State Unemployment Insurance) *
+                  </CustomFormLabel>
                   <CustomSelect
                     id="sui"
                     name="sui"
@@ -594,7 +630,7 @@ export default function HRRequestPage() {
                   <Stack direction="row" justifyContent="flex-end" spacing={2}>
                     <Button
                       variant="outlined"
-                      onClick={() => router.push("/hr/dashboard")}
+                      onClick={() => router.push(getDashboardPath(userRole))}
                     >
                       Cancel
                     </Button>
@@ -624,4 +660,3 @@ export default function HRRequestPage() {
     </Box>
   );
 }
-

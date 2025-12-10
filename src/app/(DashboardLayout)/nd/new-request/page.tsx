@@ -12,7 +12,7 @@ import {
   StepLabel,
   Divider,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -86,7 +86,8 @@ const validationSchema = Yup.object({
   tourName: Yup.string().required("Tour name is required"),
   positionTitle: Yup.string(),
   hireDate: Yup.string().required("Hire date is required"),
-  salaryEventRate: Yup.number().positive("Must be a positive number"),
+  eventRate: Yup.number().positive("Must be a positive number").nullable(),
+  dayRate: Yup.number().positive("Must be a positive number").nullable(),
   workerCategory: Yup.string().required("Worker category is required"),
   hireOrRehire: Yup.string().required("Hire type is required"),
   notes: Yup.string(),
@@ -97,6 +98,46 @@ export default function NewHireRequestPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string>("nd");
+
+  // Fetch user role to determine correct redirect
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const response = await fetch("/api/auth/user-role");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role || "nd");
+        }
+      } catch (err) {
+        console.error("Error fetching user role:", err);
+      }
+    };
+    fetchUserRole();
+  }, []);
+
+  // Get the correct dashboard path based on user role
+  const getDashboardPath = () => {
+    switch (userRole) {
+      case "admin":
+        return "/admin/dashboard";
+      case "hr":
+        return "/hr/dashboard";
+      default:
+        return "/nd/dashboard";
+    }
+  };
+
+  // Get the correct request detail path based on user role
+  const getRequestDetailPath = (id: number) => {
+    switch (userRole) {
+      case "admin":
+      case "hr":
+        return `/hr/request/${id}`;
+      default:
+        return `/nd/request/${id}`;
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -108,7 +149,8 @@ export default function NewHireRequestPage() {
       tourName: "",
       positionTitle: "",
       hireDate: "",
-      salaryEventRate: "",
+      eventRate: "",
+      dayRate: "",
       workerCategory: "",
       hireOrRehire: "",
       notes: "",
@@ -133,7 +175,7 @@ export default function NewHireRequestPage() {
 
         setSuccess(true);
         setTimeout(() => {
-          router.push(`/nd/request/${data.id}`);
+          router.push(getRequestDetailPath(data.id));
         }, 2000);
       } catch (err: any) {
         setError(err.message);
@@ -150,7 +192,7 @@ export default function NewHireRequestPage() {
         <Button
           variant="text"
           startIcon={<IconArrowLeft size={18} />}
-          onClick={() => router.push("/nd/dashboard")}
+          onClick={() => router.push(getDashboardPath())}
         >
           Back
         </Button>
@@ -355,25 +397,40 @@ export default function NewHireRequestPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <CustomFormLabel htmlFor="salaryEventRate">
-                Salary / Event Rate
-              </CustomFormLabel>
+              <CustomFormLabel htmlFor="eventRate">Event Rate</CustomFormLabel>
               <CustomTextField
-                id="salaryEventRate"
-                name="salaryEventRate"
+                id="eventRate"
+                name="eventRate"
                 type="number"
                 fullWidth
-                value={formik.values.salaryEventRate}
+                value={formik.values.eventRate}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={
-                  formik.touched.salaryEventRate &&
-                  Boolean(formik.errors.salaryEventRate)
+                  formik.touched.eventRate && Boolean(formik.errors.eventRate)
                 }
-                helperText={
-                  formik.touched.salaryEventRate &&
-                  formik.errors.salaryEventRate
-                }
+                helperText={formik.touched.eventRate && formik.errors.eventRate}
+                InputProps={{
+                  startAdornment: (
+                    <Typography sx={{ mr: 1 }} color="textSecondary">
+                      $
+                    </Typography>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <CustomFormLabel htmlFor="dayRate">Day Rate</CustomFormLabel>
+              <CustomTextField
+                id="dayRate"
+                name="dayRate"
+                type="number"
+                fullWidth
+                value={formik.values.dayRate}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.dayRate && Boolean(formik.errors.dayRate)}
+                helperText={formik.touched.dayRate && formik.errors.dayRate}
                 InputProps={{
                   startAdornment: (
                     <Typography sx={{ mr: 1 }} color="textSecondary">
@@ -426,7 +483,9 @@ export default function NewHireRequestPage() {
               </CustomSelect>
             </Grid>
             <Grid size={12}>
-              <CustomFormLabel htmlFor="notes">Notes (Optional)</CustomFormLabel>
+              <CustomFormLabel htmlFor="notes">
+                Notes (Optional)
+              </CustomFormLabel>
               <CustomTextField
                 id="notes"
                 name="notes"
@@ -448,7 +507,7 @@ export default function NewHireRequestPage() {
         <Stack direction="row" justifyContent="flex-end" spacing={2}>
           <Button
             variant="outlined"
-            onClick={() => router.push("/nd/dashboard")}
+            onClick={() => router.push(getDashboardPath())}
           >
             Cancel
           </Button>
@@ -471,4 +530,3 @@ export default function NewHireRequestPage() {
     </Box>
   );
 }
-

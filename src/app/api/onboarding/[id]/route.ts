@@ -21,7 +21,10 @@ export async function GET(
     const requestId = parseInt(params.id);
 
     if (isNaN(requestId)) {
-      return NextResponse.json({ error: "Invalid request ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request ID" },
+        { status: 400 }
+      );
     }
 
     // Get user from database
@@ -33,9 +36,25 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Fetch the onboarding request
+    // Fetch the onboarding request with relations
     const onboardingRequest = await db.query.onboardingRequests.findFirst({
       where: eq(onboardingRequests.id, requestId),
+      with: {
+        createdByNd: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedHr: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!onboardingRequest) {
@@ -71,4 +90,3 @@ export async function GET(
     );
   }
 }
-

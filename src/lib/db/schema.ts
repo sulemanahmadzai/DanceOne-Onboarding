@@ -163,7 +163,8 @@ export const onboardingRequests = pgTable("onboarding_requests", {
   tourName: varchar("tour_name", { length: 255 }),
   positionTitle: varchar("position_title", { length: 100 }),
   hireDate: date("hire_date"),
-  salaryEventRate: decimal("salary_event_rate", { precision: 10, scale: 2 }),
+  eventRate: decimal("event_rate", { precision: 10, scale: 2 }),
+  dayRate: decimal("day_rate", { precision: 10, scale: 2 }),
   workerCategory: varchar("worker_category", { length: 10 }), // W2 or 1099
   hireOrRehire: varchar("hire_or_rehire", { length: 20 }), // new_hire or rehire
   notes: text("notes"),
@@ -357,4 +358,3 @@ export type OnboardingRequestWithRelations = OnboardingRequest & {
   assignedHr?: Pick<User, "id" | "name" | "email"> | null;
   candidateTokens?: CandidateToken[];
 };
-

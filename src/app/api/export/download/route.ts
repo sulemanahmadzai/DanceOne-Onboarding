@@ -61,7 +61,8 @@ export async function POST(request: Request) {
       { key: "tourName", header: "Tour Name" },
       { key: "positionTitle", header: "Position Title" },
       { key: "hireDate", header: "Hire Date" },
-      { key: "salaryEventRate", header: "Salary (Event Rate)" },
+      { key: "eventRate", header: "Event Rate (RATE 1)" },
+      { key: "dayRate", header: "Day Rate (RATE 1)" },
       { key: "workerCategory", header: "Worker Category (1099/W2)" },
       { key: "hireOrRehire", header: "Hire or Rehire" },
       { key: "maritalStatusState", header: "Marital Status" },
@@ -100,22 +101,29 @@ export async function POST(request: Request) {
       return columns
         .map((col) => {
           let value = record[col.key];
-          
+
           // Format dates
-          if (["birthDate", "hireDate", "changeEffectiveDate"].includes(col.key)) {
+          if (
+            ["birthDate", "hireDate", "changeEffectiveDate"].includes(col.key)
+          ) {
             value = formatDate(value);
           }
-          
+
           // Format hire/rehire
           if (col.key === "hireOrRehire") {
-            value = value === "new_hire" ? "New Hire" : value === "rehire" ? "Rehire" : value;
+            value =
+              value === "new_hire"
+                ? "New Hire"
+                : value === "rehire"
+                ? "Rehire"
+                : value;
           }
-          
+
           // Format marital status
           if (col.key === "maritalStatusState" && value) {
             value = value.charAt(0).toUpperCase() + value.slice(1);
           }
-          
+
           // Format I-9
           if (col.key === "willWorkerCompleteI9" && value) {
             value = value.toUpperCase();
@@ -132,7 +140,9 @@ export async function POST(request: Request) {
     return new NextResponse(csvContent, {
       headers: {
         "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="danceone-onboarding-export-${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Disposition": `attachment; filename="danceone-onboarding-export-${
+          new Date().toISOString().split("T")[0]
+        }.csv"`,
       },
     });
   } catch (error) {
@@ -143,4 +153,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
