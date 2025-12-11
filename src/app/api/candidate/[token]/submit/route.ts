@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import {
   candidateTokens,
@@ -9,6 +9,30 @@ import {
 import { eq, and, gt } from "drizzle-orm";
 import { sendEmail } from "@/lib/email/resend";
 import { getHRNotificationEmail } from "@/lib/email/templates";
+
+// Helper function to get base URL from request
+function getBaseUrl(request: Request | NextRequest): string {
+  // Try to get from environment variable first
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // Try to get from NextRequest's nextUrl
+  if (request instanceof NextRequest && request.nextUrl) {
+    return request.nextUrl.origin;
+  }
+  
+  // Fallback: extract from headers
+  const host = request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") || "https";
+  
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+  
+  // Last resort fallback
+  return process.env.APP_URL || "http://localhost:3000";
+}
 
 export async function POST(
   request: Request,
@@ -119,7 +143,8 @@ export async function POST(
     });
 
     // Send email notification to HR
-    const hrLink = `${process.env.NEXT_PUBLIC_APP_URL}/hr/request/${onboardingRequest.id}`;
+    const baseUrl = getBaseUrl(request);
+    const hrLink = `${baseUrl}/hr/request/${onboardingRequest.id}`;
     
     for (const hrUser of hrUsers) {
       try {

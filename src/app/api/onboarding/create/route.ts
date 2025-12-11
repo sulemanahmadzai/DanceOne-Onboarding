@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import {
@@ -11,6 +11,30 @@ import { eq } from "drizzle-orm";
 import crypto from "crypto";
 import { sendEmail } from "@/lib/email/resend";
 import { getCandidateInvitationEmail } from "@/lib/email/templates";
+
+// Helper function to get base URL from request
+function getBaseUrl(request: Request | NextRequest): string {
+  // Try to get from environment variable first
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+  
+  // Try to get from NextRequest's nextUrl
+  if (request instanceof NextRequest && request.nextUrl) {
+    return request.nextUrl.origin;
+  }
+  
+  // Fallback: extract from headers
+  const host = request.headers.get("host");
+  const protocol = request.headers.get("x-forwarded-proto") || "https";
+  
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+  
+  // Last resort fallback
+  return process.env.APP_URL || "http://localhost:3000";
+}
 
 export async function POST(request: Request) {
   try {
@@ -112,7 +136,8 @@ export async function POST(request: Request) {
     });
 
     // Send email to candidate
-    const candidateLink = `${process.env.NEXT_PUBLIC_APP_URL}/candidate/${token}`;
+    const baseUrl = getBaseUrl(request);
+    const candidateLink = `${baseUrl}/candidate/${token}`;
 
     try {
       const emailContent = getCandidateInvitationEmail({
