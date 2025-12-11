@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { onboardingRequests, users, OnboardingStatus } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -24,16 +24,28 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user is HR or Admin
-    if (dbUser.role !== "hr" && dbUser.role !== "admin") {
+    // Check if user is HR, Admin, or ND
+    if (dbUser.role !== "hr" && dbUser.role !== "admin" && dbUser.role !== "nd") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Fetch all completed onboarding requests
-    const requests = await db.query.onboardingRequests.findMany({
-      where: eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
-      orderBy: [desc(onboardingRequests.hrCompletedAt)],
-    });
+    // Fetch completed onboarding requests
+    // ND users can only see their own records, HR and Admin can see all
+    let requests;
+    if (dbUser.role === "nd") {
+      requests = await db.query.onboardingRequests.findMany({
+        where: and(
+          eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
+          eq(onboardingRequests.createdByNdId, dbUser.id)
+        ),
+        orderBy: [desc(onboardingRequests.hrCompletedAt)],
+      });
+    } else {
+      requests = await db.query.onboardingRequests.findMany({
+        where: eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
+        orderBy: [desc(onboardingRequests.hrCompletedAt)],
+      });
+    }
 
     return NextResponse.json({ requests });
   } catch (error) {

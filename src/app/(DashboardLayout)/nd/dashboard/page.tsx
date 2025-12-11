@@ -33,6 +33,7 @@ import {
   IconCircleCheck,
   IconAlertCircle,
   IconSearch,
+  IconFileExport,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
@@ -220,19 +221,28 @@ export default function NDDashboardPage() {
             Manage your onboarding requests
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<IconPlus size={18} />}
-          onClick={() => router.push("/nd/new-request")}
-          sx={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            "&:hover": {
-              background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
-            },
-          }}
-        >
-          New Hire Request
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            startIcon={<IconFileExport size={18} />}
+            onClick={() => router.push("/nd/export")}
+          >
+            Export Records
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<IconPlus size={18} />}
+            onClick={() => router.push("/nd/new-request")}
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)",
+              },
+            }}
+          >
+            New Hire Request
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Stats Cards */}

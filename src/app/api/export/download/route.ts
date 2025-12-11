@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db";
 import { onboardingRequests, users, OnboardingStatus } from "@/lib/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user is HR or Admin
-    if (dbUser.role !== "hr" && dbUser.role !== "admin") {
+    // Check if user is HR, Admin, or ND
+    if (dbUser.role !== "hr" && dbUser.role !== "admin" && dbUser.role !== "nd") {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -33,15 +33,36 @@ export async function POST(request: Request) {
     const { ids } = body;
 
     // Fetch the requested records
+    // ND users can only export their own records, HR and Admin can export all
     let records;
     if (ids && ids.length > 0) {
-      records = await db.query.onboardingRequests.findMany({
-        where: inArray(onboardingRequests.id, ids),
-      });
+      if (dbUser.role === "nd") {
+        // ND users can only export their own records
+        records = await db.query.onboardingRequests.findMany({
+          where: and(
+            inArray(onboardingRequests.id, ids),
+            eq(onboardingRequests.createdByNdId, dbUser.id)
+          ),
+        });
+      } else {
+        records = await db.query.onboardingRequests.findMany({
+          where: inArray(onboardingRequests.id, ids),
+        });
+      }
     } else {
-      records = await db.query.onboardingRequests.findMany({
-        where: eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
-      });
+      if (dbUser.role === "nd") {
+        // ND users can only export their own completed records
+        records = await db.query.onboardingRequests.findMany({
+          where: and(
+            eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
+            eq(onboardingRequests.createdByNdId, dbUser.id)
+          ),
+        });
+      } else {
+        records = await db.query.onboardingRequests.findMany({
+          where: eq(onboardingRequests.status, OnboardingStatus.COMPLETED),
+        });
+      }
     }
 
     // Define CSV columns in ADP-compatible order

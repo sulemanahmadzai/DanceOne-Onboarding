@@ -181,6 +181,19 @@ export default function HRDashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [tourFilter, setTourFilter] = useState<string>("all");
+  const [createdByNdFilter, setCreatedByNdFilter] = useState<string>("all");
+  const [candidateNameFilter, setCandidateNameFilter] = useState<string>("");
+  const [jobTitleFilter, setJobTitleFilter] = useState<string>("all");
+  const [startDateFilter, setStartDateFilter] = useState<string>("");
+  const [stateFilter, setStateFilter] = useState<string>("all");
+  const [hireTypeFilter, setHireTypeFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [eventRateMinFilter, setEventRateMinFilter] = useState<string>("");
+  const [eventRateMaxFilter, setEventRateMaxFilter] = useState<string>("");
+  const [dayRateMinFilter, setDayRateMinFilter] = useState<string>("");
+  const [dayRateMaxFilter, setDayRateMaxFilter] = useState<string>("");
+  const [emailFilter, setEmailFilter] = useState<string>("");
+  const [assignedHrFilter, setAssignedHrFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteRequestId, setDeleteRequestId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -212,7 +225,32 @@ export default function HRDashboardPage() {
     fetchData();
   }, []);
 
-  // Filter requests based on status, search query, and tour
+  // Extract unique values for dropdown filters
+  const uniqueCreatedByNd = Array.from(
+    new Set(
+      requests
+        .map((r) => r.createdByNd?.name || r.createdByNd?.email || "")
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const uniqueJobTitles = Array.from(
+    new Set(requests.map((r) => r.positionTitle).filter(Boolean))
+  ).sort();
+
+  const uniqueStates = Array.from(
+    new Set(requests.map((r) => r.addressState).filter(Boolean))
+  ).sort();
+
+  const uniqueAssignedHr = Array.from(
+    new Set(
+      requests
+        .map((r) => r.assignedHr?.name || r.assignedHr?.email || "")
+        .filter(Boolean)
+    )
+  ).sort();
+
+  // Filter requests based on all filters
   useEffect(() => {
     let filtered = requests;
 
@@ -222,6 +260,105 @@ export default function HRDashboardPage() {
 
     if (tourFilter !== "all") {
       filtered = filtered.filter((r) => r.tourName === tourFilter);
+    }
+
+    if (createdByNdFilter !== "all") {
+      filtered = filtered.filter(
+        (r) =>
+          r.createdByNd?.name === createdByNdFilter ||
+          r.createdByNd?.email === createdByNdFilter
+      );
+    }
+
+    if (candidateNameFilter) {
+      const query = candidateNameFilter.toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          r.candidateFirstName.toLowerCase().includes(query) ||
+          r.candidateLastName.toLowerCase().includes(query) ||
+          `${r.candidateFirstName} ${r.candidateLastName}`
+            .toLowerCase()
+            .includes(query)
+      );
+    }
+
+    if (jobTitleFilter !== "all") {
+      filtered = filtered.filter((r) => r.positionTitle === jobTitleFilter);
+    }
+
+    if (startDateFilter) {
+      filtered = filtered.filter((r) => {
+        if (!r.hireDate) return false;
+        const requestDate = new Date(r.hireDate).toISOString().split("T")[0];
+        return requestDate === startDateFilter;
+      });
+    }
+
+    if (stateFilter !== "all") {
+      filtered = filtered.filter((r) => r.addressState === stateFilter);
+    }
+
+    if (hireTypeFilter !== "all") {
+      filtered = filtered.filter((r) => {
+        if (hireTypeFilter === "HIRE") {
+          return r.hireOrRehire === "hire" || r.hireOrRehire === "new_hire";
+        }
+        if (hireTypeFilter === "REHIRE") {
+          return r.hireOrRehire === "rehire";
+        }
+        return false;
+      });
+    }
+
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((r) => r.workerCategory === categoryFilter);
+    }
+
+    if (eventRateMinFilter) {
+      const min = parseFloat(eventRateMinFilter);
+      filtered = filtered.filter((r) => {
+        const rate = r.eventRate ? parseFloat(r.eventRate) : 0;
+        return rate >= min;
+      });
+    }
+
+    if (eventRateMaxFilter) {
+      const max = parseFloat(eventRateMaxFilter);
+      filtered = filtered.filter((r) => {
+        const rate = r.eventRate ? parseFloat(r.eventRate) : 0;
+        return rate <= max;
+      });
+    }
+
+    if (dayRateMinFilter) {
+      const min = parseFloat(dayRateMinFilter);
+      filtered = filtered.filter((r) => {
+        const rate = r.dayRate ? parseFloat(r.dayRate) : 0;
+        return rate >= min;
+      });
+    }
+
+    if (dayRateMaxFilter) {
+      const max = parseFloat(dayRateMaxFilter);
+      filtered = filtered.filter((r) => {
+        const rate = r.dayRate ? parseFloat(r.dayRate) : 0;
+        return rate <= max;
+      });
+    }
+
+    if (emailFilter) {
+      const query = emailFilter.toLowerCase();
+      filtered = filtered.filter((r) =>
+        r.candidateEmail.toLowerCase().includes(query)
+      );
+    }
+
+    if (assignedHrFilter !== "all") {
+      filtered = filtered.filter(
+        (r) =>
+          r.assignedHr?.name === assignedHrFilter ||
+          r.assignedHr?.email === assignedHrFilter
+      );
     }
 
     if (searchQuery) {
@@ -238,7 +375,25 @@ export default function HRDashboardPage() {
     }
 
     setFilteredRequests(filtered);
-  }, [statusFilter, searchQuery, tourFilter, requests]);
+  }, [
+    statusFilter,
+    searchQuery,
+    tourFilter,
+    createdByNdFilter,
+    candidateNameFilter,
+    jobTitleFilter,
+    startDateFilter,
+    stateFilter,
+    hireTypeFilter,
+    categoryFilter,
+    eventRateMinFilter,
+    eventRateMaxFilter,
+    dayRateMinFilter,
+    dayRateMaxFilter,
+    emailFilter,
+    assignedHrFilter,
+    requests,
+  ]);
 
   const handleDeleteClick = (id: number) => {
     setDeleteRequestId(id);
@@ -367,59 +522,258 @@ export default function HRDashboardPage() {
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={2}
-            alignItems={{ xs: "stretch", md: "center" }}
-            justifyContent="space-between"
-          >
-            <Stack direction="row" spacing={2} alignItems="center">
-              <TextField
-                placeholder="Search by name, email, or tour..."
-                size="small"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IconSearch size={18} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ minWidth: 280 }}
-              />
-              <FormControl size="small" sx={{ minWidth: 180 }}>
-                <Select
-                  value={tourFilter}
-                  onChange={(e) => setTourFilter(e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value="all">All Tours</MenuItem>
-                  {TOUR_FILTER_OPTIONS.map((tour) => (
-                    <MenuItem key={tour.value} value={tour.value}>
-                      {tour.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-            <ToggleButtonGroup
-              value={statusFilter}
-              exclusive
-              onChange={handleStatusFilterChange}
-              size="small"
+          <Stack spacing={3}>
+            {/* Main Search and Status Filters */}
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={2}
+              alignItems={{ xs: "stretch", md: "center" }}
+              justifyContent="space-between"
             >
-              <ToggleButton value="all">All</ToggleButton>
-              <ToggleButton value={OnboardingStatus.WAITING_FOR_CANDIDATE}>
-                Waiting Candidate
-              </ToggleButton>
-              <ToggleButton value={OnboardingStatus.WAITING_FOR_HR}>
-                Waiting HR
-              </ToggleButton>
-              <ToggleButton value={OnboardingStatus.COMPLETED}>
-                Completed
-              </ToggleButton>
-            </ToggleButtonGroup>
+              <Stack direction="row" spacing={2} alignItems="center" flex={1}>
+                <TextField
+                  placeholder="Search by name, email, or tour..."
+                  size="small"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size={18} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ minWidth: 280, flex: 1 }}
+                />
+                <ToggleButtonGroup
+                  value={statusFilter}
+                  exclusive
+                  onChange={handleStatusFilterChange}
+                  size="small"
+                >
+                  <ToggleButton value="all">All</ToggleButton>
+                  <ToggleButton value={OnboardingStatus.WAITING_FOR_CANDIDATE}>
+                    Waiting Candidate
+                  </ToggleButton>
+                  <ToggleButton value={OnboardingStatus.WAITING_FOR_HR}>
+                    Waiting HR
+                  </ToggleButton>
+                  <ToggleButton value={OnboardingStatus.COMPLETED}>
+                    Completed
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Stack>
+            </Stack>
+
+            {/* Column Filters Grid */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={tourFilter}
+                    onChange={(e) => setTourFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Tours</MenuItem>
+                    {TOUR_FILTER_OPTIONS.map((tour) => (
+                      <MenuItem key={tour.value} value={tour.value}>
+                        {tour.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={createdByNdFilter}
+                    onChange={(e) => setCreatedByNdFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Created by ND</MenuItem>
+                    {uniqueCreatedByNd.map((nd) => (
+                      <MenuItem key={nd} value={nd}>
+                        {nd}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  placeholder="Candidate Name"
+                  size="small"
+                  fullWidth
+                  value={candidateNameFilter}
+                  onChange={(e) => setCandidateNameFilter(e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={jobTitleFilter}
+                    onChange={(e) => setJobTitleFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Job Titles</MenuItem>
+                    {uniqueJobTitles.map((title) => (
+                      <MenuItem key={title} value={title}>
+                        {title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  type="date"
+                  label="Start Date"
+                  size="small"
+                  fullWidth
+                  value={startDateFilter}
+                  onChange={(e) => setStartDateFilter(e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={stateFilter}
+                    onChange={(e) => setStateFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All States</MenuItem>
+                    {uniqueStates.map((state) => (
+                      <MenuItem key={state} value={state}>
+                        {state}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={hireTypeFilter}
+                    onChange={(e) => setHireTypeFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Hire Types</MenuItem>
+                    <MenuItem value="HIRE">HIRE</MenuItem>
+                    <MenuItem value="REHIRE">REHIRE</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Categories</MenuItem>
+                    <MenuItem value="W2">W2</MenuItem>
+                    <MenuItem value="1099">1099</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Stack direction="row" spacing={1}>
+                  <TextField
+                    type="number"
+                    placeholder="Min Event Rate"
+                    size="small"
+                    value={eventRateMinFilter}
+                    onChange={(e) => setEventRateMinFilter(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    sx={{ flex: 1 }}
+                  />
+                  <TextField
+                    type="number"
+                    placeholder="Max Event Rate"
+                    size="small"
+                    value={eventRateMaxFilter}
+                    onChange={(e) => setEventRateMaxFilter(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    sx={{ flex: 1 }}
+                  />
+                </Stack>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Stack direction="row" spacing={1}>
+                  <TextField
+                    type="number"
+                    placeholder="Min Day Rate"
+                    size="small"
+                    value={dayRateMinFilter}
+                    onChange={(e) => setDayRateMinFilter(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    sx={{ flex: 1 }}
+                  />
+                  <TextField
+                    type="number"
+                    placeholder="Max Day Rate"
+                    size="small"
+                    value={dayRateMaxFilter}
+                    onChange={(e) => setDayRateMaxFilter(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">$</InputAdornment>
+                      ),
+                    }}
+                    sx={{ flex: 1 }}
+                  />
+                </Stack>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <TextField
+                  placeholder="Email"
+                  size="small"
+                  fullWidth
+                  value={emailFilter}
+                  onChange={(e) => setEmailFilter(e.target.value)}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <FormControl fullWidth size="small">
+                  <Select
+                    value={assignedHrFilter}
+                    onChange={(e) => setAssignedHrFilter(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="all">All Assigned HR</MenuItem>
+                    {uniqueAssignedHr.map((hr) => (
+                      <MenuItem key={hr} value={hr}>
+                        {hr}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           </Stack>
         </CardContent>
       </Card>
