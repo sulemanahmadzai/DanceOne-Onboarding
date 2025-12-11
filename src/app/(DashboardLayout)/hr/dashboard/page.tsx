@@ -230,23 +230,23 @@ export default function HRDashboardPage() {
     new Set(
       requests
         .map((r) => r.createdByNd?.name || r.createdByNd?.email || "")
-        .filter(Boolean)
+        .filter((val): val is string => Boolean(val))
     )
   ).sort();
 
   const uniqueJobTitles = Array.from(
-    new Set(requests.map((r) => r.positionTitle).filter(Boolean))
+    new Set(requests.map((r) => r.positionTitle).filter((title): title is string => Boolean(title)))
   ).sort();
 
   const uniqueStates = Array.from(
-    new Set(requests.map((r) => r.addressState).filter(Boolean))
+    new Set(requests.map((r) => r.addressState).filter((state): state is string => Boolean(state)))
   ).sort();
 
   const uniqueAssignedHr = Array.from(
     new Set(
       requests
         .map((r) => r.assignedHr?.name || r.assignedHr?.email || "")
-        .filter(Boolean)
+        .filter((val): val is string => Boolean(val))
     )
   ).sort();
 
