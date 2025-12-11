@@ -35,6 +35,13 @@ import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLab
 import CustomSelect from "@/app/components/forms/theme-elements/CustomSelect";
 import { OnboardingStatus } from "@/lib/db/schema";
 import { TOUR_NAMES } from "@/lib/constants/tours";
+import {
+  COMPANY_CODES,
+  HOME_DEPARTMENTS,
+  I9_COMPLETION_OPTIONS,
+  SUI_STATE_MAP,
+  POSITION_TITLES,
+} from "@/lib/constants/hr-options";
 
 const US_STATES = [
   { value: "AL", label: "Alabama" },
@@ -259,12 +266,23 @@ export default function HRRequestPage() {
     fetchData();
   }, [params.id]);
 
+  // Auto-populate SUI when addressState is available
+  useEffect(() => {
+    if (request?.addressState && !formik.values.sui) {
+      const suiValue = SUI_STATE_MAP[request.addressState];
+      if (suiValue) {
+        formik.setFieldValue("sui", suiValue);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request?.addressState]);
+
   const formik = useFormik({
     initialValues: {
       changeEffectiveDate: request?.changeEffectiveDate || "",
       companyCode: request?.companyCode || "",
       homeDepartment: request?.homeDepartment || "",
-      sui: request?.sui || "",
+      sui: request?.sui || (request?.addressState ? SUI_STATE_MAP[request.addressState] || "" : ""),
       willWorkerCompleteI9: request?.willWorkerCompleteI9 || "",
       eVerifyWorkLocation: request?.eVerifyWorkLocation || "",
     },
@@ -554,12 +572,19 @@ export default function HRRequestPage() {
                   </Grid>
                   <Grid size={12}>
                     <CustomFormLabel>Position Title</CustomFormLabel>
-                    <CustomTextField
+                    <CustomSelect
                       name="positionTitle"
                       fullWidth
-                      value={ndFormik.values.positionTitle}
+                      value={ndFormik.values.positionTitle || ""}
                       onChange={ndFormik.handleChange}
-                    />
+                    >
+                      <MenuItem value="">Select Position Title</MenuItem>
+                      {POSITION_TITLES.map((title) => (
+                        <MenuItem key={title.value} value={title.value}>
+                          {title.label}
+                        </MenuItem>
+                      ))}
+                    </CustomSelect>
                   </Grid>
                   <Grid size={12}>
                     <CustomFormLabel>Hire Date *</CustomFormLabel>
@@ -977,7 +1002,7 @@ export default function HRRequestPage() {
                   <CustomFormLabel htmlFor="companyCode">
                     Company Code *
                   </CustomFormLabel>
-                  <CustomTextField
+                  <CustomSelect
                     id="companyCode"
                     name="companyCode"
                     fullWidth
@@ -989,16 +1014,20 @@ export default function HRRequestPage() {
                       formik.touched.companyCode &&
                       Boolean(formik.errors.companyCode)
                     }
-                    helperText={
-                      formik.touched.companyCode && formik.errors.companyCode
-                    }
-                  />
+                  >
+                    <MenuItem value="">Select Company Code</MenuItem>
+                    {COMPANY_CODES.map((code) => (
+                      <MenuItem key={code.value} value={code.value}>
+                        {code.label}
+                      </MenuItem>
+                    ))}
+                  </CustomSelect>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="homeDepartment">
                     Home Department *
                   </CustomFormLabel>
-                  <CustomTextField
+                  <CustomSelect
                     id="homeDepartment"
                     name="homeDepartment"
                     fullWidth
@@ -1010,17 +1039,20 @@ export default function HRRequestPage() {
                       formik.touched.homeDepartment &&
                       Boolean(formik.errors.homeDepartment)
                     }
-                    helperText={
-                      formik.touched.homeDepartment &&
-                      formik.errors.homeDepartment
-                    }
-                  />
+                  >
+                    <MenuItem value="">Select Home Department</MenuItem>
+                    {HOME_DEPARTMENTS.map((dept) => (
+                      <MenuItem key={dept.value} value={dept.value}>
+                        {dept.label}
+                      </MenuItem>
+                    ))}
+                  </CustomSelect>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="sui">
                     SUI (State Unemployment Insurance) *
                   </CustomFormLabel>
-                  <CustomSelect
+                  <CustomTextField
                     id="sui"
                     name="sui"
                     fullWidth
@@ -1029,14 +1061,14 @@ export default function HRRequestPage() {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     error={formik.touched.sui && Boolean(formik.errors.sui)}
-                  >
-                    <MenuItem value="">Select State</MenuItem>
-                    {US_STATES.map((state) => (
-                      <MenuItem key={state.value} value={state.value}>
-                        {state.label}
-                      </MenuItem>
-                    ))}
-                  </CustomSelect>
+                    helperText={
+                      formik.touched.sui && formik.errors.sui
+                        ? formik.errors.sui
+                        : request?.addressState
+                        ? `Auto-populated from Address State: ${request.addressState}`
+                        : ""
+                    }
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <CustomFormLabel htmlFor="willWorkerCompleteI9">
@@ -1056,8 +1088,11 @@ export default function HRRequestPage() {
                     }
                   >
                     <MenuItem value="">Select</MenuItem>
-                    <MenuItem value="yes">Yes</MenuItem>
-                    <MenuItem value="no">No</MenuItem>
+                    {I9_COMPLETION_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
                   </CustomSelect>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>

@@ -21,6 +21,7 @@ import DashboardCard from "@/app/components/shared/DashboardCard";
 import CustomTextField from "@/app/components/forms/theme-elements/CustomTextField";
 import CustomFormLabel from "@/app/components/forms/theme-elements/CustomFormLabel";
 import CustomSelect from "@/app/components/forms/theme-elements/CustomSelect";
+import { POSITION_TITLES } from "@/lib/constants/hr-options";
 
 const TOUR_NAMES = [
   { value: "Starpower", label: "Starpower" },
@@ -100,7 +101,7 @@ const validationSchema = Yup.object({
   candidateEmail: Yup.string()
     .email("Invalid email address")
     .required("Email is required"),
-  candidatePhone: Yup.string().required("Phone number is required"),
+  candidatePhone: Yup.string(),
   stateOfResidence: Yup.string().required("State of residence is required"),
   tourNameSelect: Yup.string().required("Tour name is required"),
   tourNameOther: Yup.string().when("tourNameSelect", {
@@ -341,7 +342,7 @@ export default function NewHireRequestPage() {
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="candidatePhone">
-                Phone Number *
+                Phone Number
               </CustomFormLabel>
               <CustomTextField
                 id="candidatePhone"
@@ -445,14 +446,21 @@ export default function NewHireRequestPage() {
               <CustomFormLabel htmlFor="positionTitle">
                 Position Title
               </CustomFormLabel>
-              <CustomTextField
+              <CustomSelect
                 id="positionTitle"
                 name="positionTitle"
                 fullWidth
-                value={formik.values.positionTitle}
+                value={formik.values.positionTitle || ""}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-              />
+              >
+                <MenuItem value="">Select Position Title</MenuItem>
+                {POSITION_TITLES.map((title) => (
+                  <MenuItem key={title.value} value={title.value}>
+                    {title.label}
+                  </MenuItem>
+                ))}
+              </CustomSelect>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomFormLabel htmlFor="hireDate">Hire Date *</CustomFormLabel>
