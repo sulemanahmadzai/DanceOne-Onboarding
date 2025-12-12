@@ -5,17 +5,48 @@ import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/email/resend";
 
 /**
+ * GET endpoint to verify webhook is accessible
+ * PandaDoc may use this to verify the webhook URL
+ */
+export async function GET() {
+  return NextResponse.json({
+    status: "ok",
+    message: "PandaDoc webhook endpoint is active",
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/**
  * PandaDoc Webhook Handler
  * Handles document status updates and signature events
+ * 
+ * PandaDoc webhook event types:
+ * - document_state_changed: When document status changes (draft, sent, completed, etc.)
+ * - recipient_completed: When a recipient completes their signing
+ * - document_completed: Alternative event when all signatures are done
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // Log the full webhook payload for debugging
+    console.log("📨 PandaDoc Webhook Received:", JSON.stringify(body, null, 2));
+
     // PandaDoc webhook events
     // See: https://developers.pandadoc.com/reference/webhooks
-    const eventType = body.type;
-    const documentId = body.data?.id || body.data?.document?.id;
+    // Note: PandaDoc uses different event names in different versions
+    const eventType = body.event || body.type || body.name;
+    const documentId = body.data?.id || body.data?.document?.id || body.document?.id;
+    const documentStatus = body.data?.status || body.document?.status || body.status;
+
+    console.log("📋 Webhook Details:", {
+      eventType,
+      documentId,
+      documentStatus,
+      rawEvent: body.event,
+      rawType: body.type,
+      rawName: body.name,
+    });
 
     if (!documentId) {
       return NextResponse.json(
@@ -49,10 +80,16 @@ export async function POST(request: Request) {
     });
 
     // Handle different event types
+    // PandaDoc can send: document_state_changed, document_status_changed, document.completed, recipient_completed
     switch (eventType) {
+      case "document_state_changed":
       case "document_status_changed":
-        const status = body.data?.status;
-        if (status === "document.completed") {
+      case "document.state_changed":
+        // Check for document completion
+        const status = documentStatus || body.data?.status;
+        console.log(`📄 Document state changed to: ${status}`);
+        
+        if (status === "document.completed" || status === "completed") {
           // All signatures completed - update status to ADP_COMPLETED
           await db
             .update(onboardingRequests)
@@ -65,7 +102,27 @@ export async function POST(request: Request) {
           console.log(
             `✅ All signatures completed for document ${documentId}, request ${onboardingRequest.id}`
           );
+        } else if (status === "document.sent" || status === "sent") {
+          console.log(`📤 Document ${documentId} was sent`);
+        } else if (status === "document.viewed" || status === "viewed") {
+          console.log(`👁️ Document ${documentId} was viewed`);
         }
+        break;
+
+      case "document_completed":
+      case "document.completed":
+        // Alternative event for document completion
+        await db
+          .update(onboardingRequests)
+          .set({
+            status: OnboardingStatus.ADP_COMPLETED,
+            updatedAt: new Date(),
+          })
+          .where(eq(onboardingRequests.id, onboardingRequest.id));
+
+        console.log(
+          `✅ Document completed event for ${documentId}, request ${onboardingRequest.id}`
+        );
         break;
 
       case "recipient_completed":
