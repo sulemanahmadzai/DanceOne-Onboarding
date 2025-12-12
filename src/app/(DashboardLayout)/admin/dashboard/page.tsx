@@ -90,12 +90,20 @@ const getStatusChip = (status: string) => {
   const statusConfig: Record<string, { label: string; color: any }> = {
     [OnboardingStatus.ND_DRAFT]: { label: "Draft", color: "default" },
     [OnboardingStatus.WAITING_FOR_CANDIDATE]: {
-      label: "Waiting for Candidate",
-      color: "warning",
+      label: "CDD Forms",
+      color: "warning", // Yellow
     },
     [OnboardingStatus.WAITING_FOR_HR]: {
-      label: "Waiting for HR",
-      color: "info",
+      label: "HR Forms",
+      color: "info", // Blue
+    },
+    [OnboardingStatus.OFFER_LETTER_SENT]: {
+      label: "Offer/BGC Sent",
+      color: "error", // Red
+    },
+    [OnboardingStatus.ADP_COMPLETED]: {
+      label: "ADP OK",
+      color: "success", // Green
     },
     [OnboardingStatus.COMPLETED]: { label: "Completed", color: "success" },
   };

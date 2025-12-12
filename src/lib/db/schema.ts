@@ -18,6 +18,8 @@ export enum OnboardingStatus {
   ND_DRAFT = "nd_draft",
   WAITING_FOR_CANDIDATE = "waiting_for_candidate",
   WAITING_FOR_HR = "waiting_for_hr",
+  OFFER_LETTER_SENT = "offer_letter_sent",
+  ADP_COMPLETED = "adp_completed",
   COMPLETED = "completed",
 }
 
@@ -188,6 +190,11 @@ export const onboardingRequests = pgTable("onboarding_requests", {
   willWorkerCompleteI9: varchar("will_worker_complete_i9", { length: 3 }), // yes or no
   eVerifyWorkLocation: varchar("e_verify_work_location", { length: 100 }),
   hrCompletedAt: timestamp("hr_completed_at"),
+  pandadocDocumentId: varchar("pandadoc_document_id", { length: 100 }),
+  // PandaDoc signature tracking
+  ndInitialsCompletedAt: timestamp("nd_initials_completed_at"),
+  hrSignatureCompletedAt: timestamp("hr_signature_completed_at"),
+  candidateSignatureCompletedAt: timestamp("candidate_signature_completed_at"),
 });
 
 // ============================================================================

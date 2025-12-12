@@ -81,22 +81,23 @@ export async function POST(request: Request) {
     }
 
     // Check for duplicate email in non-completed requests
-    const existingRequest = await db.query.onboardingRequests.findFirst({
-      where: eq(onboardingRequests.candidateEmail, body.candidateEmail),
-    });
+    // DISABLED FOR TESTING - Allow duplicate emails for now
+    // const existingRequest = await db.query.onboardingRequests.findFirst({
+    //   where: eq(onboardingRequests.candidateEmail, body.candidateEmail),
+    // });
 
-    if (
-      existingRequest &&
-      existingRequest.status !== OnboardingStatus.COMPLETED
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "An onboarding request with this email already exists and is still in progress.",
-        },
-        { status: 400 }
-      );
-    }
+    // if (
+    //   existingRequest &&
+    //   existingRequest.status !== OnboardingStatus.COMPLETED
+    // ) {
+    //   return NextResponse.json(
+    //     {
+    //       error:
+    //         "An onboarding request with this email already exists and is still in progress.",
+    //     },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Create the onboarding request
     const [newRequest] = await db

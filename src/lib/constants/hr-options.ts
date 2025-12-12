@@ -105,3 +105,5 @@ export const SUI_STATE_MAP: Record<string, string> = {
   WY: "95",
 };
 
+
+
