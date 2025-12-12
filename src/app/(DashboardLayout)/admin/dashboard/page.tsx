@@ -197,17 +197,10 @@ export default function AdminDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [tourFilter, setTourFilter] = useState<string>("all");
   const [createdByNdFilter, setCreatedByNdFilter] = useState<string>("all");
-  const [candidateNameFilter, setCandidateNameFilter] = useState<string>("");
   const [jobTitleFilter, setJobTitleFilter] = useState<string>("all");
-  const [startDateFilter, setStartDateFilter] = useState<string>("");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [hireTypeFilter, setHireTypeFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [eventRateMinFilter, setEventRateMinFilter] = useState<string>("");
-  const [eventRateMaxFilter, setEventRateMaxFilter] = useState<string>("");
-  const [dayRateMinFilter, setDayRateMinFilter] = useState<string>("");
-  const [dayRateMaxFilter, setDayRateMaxFilter] = useState<string>("");
-  const [emailFilter, setEmailFilter] = useState<string>("");
   const [assignedHrFilter, setAssignedHrFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteRequestId, setDeleteRequestId] = useState<number | null>(null);
@@ -288,28 +281,8 @@ export default function AdminDashboardPage() {
       );
     }
 
-    if (candidateNameFilter) {
-      const query = candidateNameFilter.toLowerCase();
-      filtered = filtered.filter(
-        (r) =>
-          r.candidateFirstName.toLowerCase().includes(query) ||
-          r.candidateLastName.toLowerCase().includes(query) ||
-          `${r.candidateFirstName} ${r.candidateLastName}`
-            .toLowerCase()
-            .includes(query)
-      );
-    }
-
     if (jobTitleFilter !== "all") {
       filtered = filtered.filter((r) => r.positionTitle === jobTitleFilter);
-    }
-
-    if (startDateFilter) {
-      filtered = filtered.filter((r) => {
-        if (!r.hireDate) return false;
-        const requestDate = new Date(r.hireDate).toISOString().split("T")[0];
-        return requestDate === startDateFilter;
-      });
     }
 
     if (stateFilter !== "all") {
@@ -330,45 +303,6 @@ export default function AdminDashboardPage() {
 
     if (categoryFilter !== "all") {
       filtered = filtered.filter((r) => r.workerCategory === categoryFilter);
-    }
-
-    if (eventRateMinFilter) {
-      const min = parseFloat(eventRateMinFilter);
-      filtered = filtered.filter((r) => {
-        const rate = r.eventRate ? parseFloat(r.eventRate) : 0;
-        return rate >= min;
-      });
-    }
-
-    if (eventRateMaxFilter) {
-      const max = parseFloat(eventRateMaxFilter);
-      filtered = filtered.filter((r) => {
-        const rate = r.eventRate ? parseFloat(r.eventRate) : 0;
-        return rate <= max;
-      });
-    }
-
-    if (dayRateMinFilter) {
-      const min = parseFloat(dayRateMinFilter);
-      filtered = filtered.filter((r) => {
-        const rate = r.dayRate ? parseFloat(r.dayRate) : 0;
-        return rate >= min;
-      });
-    }
-
-    if (dayRateMaxFilter) {
-      const max = parseFloat(dayRateMaxFilter);
-      filtered = filtered.filter((r) => {
-        const rate = r.dayRate ? parseFloat(r.dayRate) : 0;
-        return rate <= max;
-      });
-    }
-
-    if (emailFilter) {
-      const query = emailFilter.toLowerCase();
-      filtered = filtered.filter((r) =>
-        r.candidateEmail.toLowerCase().includes(query)
-      );
     }
 
     if (assignedHrFilter !== "all") {
@@ -392,23 +326,24 @@ export default function AdminDashboardPage() {
       );
     }
 
+    // Sort by Start Date (newer to older)
+    filtered.sort((a, b) => {
+      if (!a.hireDate && !b.hireDate) return 0;
+      if (!a.hireDate) return 1;
+      if (!b.hireDate) return -1;
+      return new Date(b.hireDate).getTime() - new Date(a.hireDate).getTime();
+    });
+
     setFilteredRequests(filtered);
   }, [
     statusFilter,
     searchQuery,
     tourFilter,
     createdByNdFilter,
-    candidateNameFilter,
     jobTitleFilter,
-    startDateFilter,
     stateFilter,
     hireTypeFilter,
     categoryFilter,
-    eventRateMinFilter,
-    eventRateMaxFilter,
-    dayRateMinFilter,
-    dayRateMaxFilter,
-    emailFilter,
     assignedHrFilter,
     requests,
   ]);
@@ -702,16 +637,6 @@ export default function AdminDashboardPage() {
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  placeholder="Candidate Name"
-                  size="small"
-                  fullWidth
-                  value={candidateNameFilter}
-                  onChange={(e) => setCandidateNameFilter(e.target.value)}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
                   <Select
                     value={jobTitleFilter}
@@ -726,18 +651,6 @@ export default function AdminDashboardPage() {
                     ))}
                   </Select>
                 </FormControl>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  type="date"
-                  label="Start Date"
-                  size="small"
-                  fullWidth
-                  value={startDateFilter}
-                  onChange={(e) => setStartDateFilter(e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                />
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -785,77 +698,6 @@ export default function AdminDashboardPage() {
                 </FormControl>
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Stack direction="row" spacing={1}>
-                  <TextField
-                    type="number"
-                    placeholder="Min Event Rate"
-                    size="small"
-                    value={eventRateMinFilter}
-                    onChange={(e) => setEventRateMinFilter(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                    sx={{ flex: 1 }}
-                  />
-                  <TextField
-                    type="number"
-                    placeholder="Max Event Rate"
-                    size="small"
-                    value={eventRateMaxFilter}
-                    onChange={(e) => setEventRateMaxFilter(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                    sx={{ flex: 1 }}
-                  />
-                </Stack>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Stack direction="row" spacing={1}>
-                  <TextField
-                    type="number"
-                    placeholder="Min Day Rate"
-                    size="small"
-                    value={dayRateMinFilter}
-                    onChange={(e) => setDayRateMinFilter(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                    sx={{ flex: 1 }}
-                  />
-                  <TextField
-                    type="number"
-                    placeholder="Max Day Rate"
-                    size="small"
-                    value={dayRateMaxFilter}
-                    onChange={(e) => setDayRateMaxFilter(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">$</InputAdornment>
-                      ),
-                    }}
-                    sx={{ flex: 1 }}
-                  />
-                </Stack>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  placeholder="Email"
-                  size="small"
-                  fullWidth
-                  value={emailFilter}
-                  onChange={(e) => setEmailFilter(e.target.value)}
-                />
-              </Grid>
 
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <FormControl fullWidth size="small">
