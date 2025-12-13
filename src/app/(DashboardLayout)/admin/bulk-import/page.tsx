@@ -463,91 +463,93 @@ export default function BulkImportPage() {
           </Button>
         }
       >
-        {approveResults && (
-          <Alert
-            severity={approveResults.errorCount === 0 ? "success" : "warning"}
-            sx={{ mb: 2 }}
-          >
-            <AlertTitle>{approveResults.message}</AlertTitle>
-            Emails sent to {approveResults.successCount} candidates.
-          </Alert>
-        )}
+        <Box>
+          {approveResults && (
+            <Alert
+              severity={approveResults.errorCount === 0 ? "success" : "warning"}
+              sx={{ mb: 2 }}
+            >
+              <AlertTitle>{approveResults.message}</AlertTitle>
+              Emails sent to {approveResults.successCount} candidates.
+            </Alert>
+          )}
 
-        {loading ? (
-          <LinearProgress />
-        ) : pendingRequests.length === 0 ? (
-          <Alert severity="info">
-            No pending requests to approve. Import a CSV file to create new requests.
-          </Alert>
-        ) : (
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={
-                        pendingRequests.length > 0 &&
-                        selectedRequests.size === pendingRequests.length
-                      }
-                      indeterminate={
-                        selectedRequests.size > 0 &&
-                        selectedRequests.size < pendingRequests.length
-                      }
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                    />
-                  </TableCell>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Candidate Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Tour</TableCell>
-                  <TableCell>Position</TableCell>
-                  <TableCell>Start Date</TableCell>
-                  <TableCell>Assigned ND</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {pendingRequests.map((request) => (
-                  <TableRow key={request.id} hover>
+          {loading ? (
+            <LinearProgress />
+          ) : pendingRequests.length === 0 ? (
+            <Alert severity="info">
+              No pending requests to approve. Import a CSV file to create new requests.
+            </Alert>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
                     <TableCell padding="checkbox">
                       <Checkbox
-                        checked={selectedRequests.has(request.id)}
-                        onChange={(e) =>
-                          handleSelectRequest(request.id, e.target.checked)
+                        checked={
+                          pendingRequests.length > 0 &&
+                          selectedRequests.size === pendingRequests.length
                         }
+                        indeterminate={
+                          selectedRequests.size > 0 &&
+                          selectedRequests.size < pendingRequests.length
+                        }
+                        onChange={(e) => handleSelectAll(e.target.checked)}
                       />
                     </TableCell>
-                    <TableCell>#{request.id}</TableCell>
-                    <TableCell>
-                      <Typography fontWeight={500}>
-                        {request.candidateFirstName} {request.candidateLastName}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{request.candidateEmail}</TableCell>
-                    <TableCell>{request.tourName || "-"}</TableCell>
-                    <TableCell>{request.positionTitle || "-"}</TableCell>
-                    <TableCell>
-                      {request.hireDate
-                        ? new Date(request.hireDate).toLocaleDateString()
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {request.createdByNd?.name || request.createdByNd?.email || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label="ND to Approve"
-                        color="secondary"
-                        size="small"
-                      />
-                    </TableCell>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Candidate Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Tour</TableCell>
+                    <TableCell>Position</TableCell>
+                    <TableCell>Start Date</TableCell>
+                    <TableCell>Assigned ND</TableCell>
+                    <TableCell>Status</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+                </TableHead>
+                <TableBody>
+                  {pendingRequests.map((request) => (
+                    <TableRow key={request.id} hover>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selectedRequests.has(request.id)}
+                          onChange={(e) =>
+                            handleSelectRequest(request.id, e.target.checked)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>#{request.id}</TableCell>
+                      <TableCell>
+                        <Typography fontWeight={500}>
+                          {request.candidateFirstName} {request.candidateLastName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{request.candidateEmail}</TableCell>
+                      <TableCell>{request.tourName || "-"}</TableCell>
+                      <TableCell>{request.positionTitle || "-"}</TableCell>
+                      <TableCell>
+                        {request.hireDate
+                          ? new Date(request.hireDate).toLocaleDateString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {request.createdByNd?.name || request.createdByNd?.email || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label="ND to Approve"
+                          color="secondary"
+                          size="small"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </Box>
       </DashboardCard>
 
       {/* Approve Confirmation Dialog */}
