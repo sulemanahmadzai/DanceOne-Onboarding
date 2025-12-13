@@ -42,6 +42,7 @@ import {
   IconFileExport,
   IconPlus,
   IconTrash,
+  IconUpload,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
@@ -84,6 +85,10 @@ interface DashboardStats {
 
 const getStatusChip = (status: string) => {
   const statusConfig: Record<string, { label: string; color: any }> = {
+    [OnboardingStatus.ND_TO_APPROVE]: { 
+      label: "ND to Approve", 
+      color: "secondary" // Purple
+    },
     [OnboardingStatus.ND_DRAFT]: { label: "Draft", color: "default" },
     [OnboardingStatus.WAITING_FOR_CANDIDATE]: {
       label: "CDD Forms",
@@ -401,6 +406,13 @@ export default function HRDashboardPage() {
             }}
           >
             New Hire Request
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<IconUpload size={18} />}
+            onClick={() => router.push("/hr/bulk-import")}
+          >
+            Bulk Import
           </Button>
           <Button
             variant="outlined"

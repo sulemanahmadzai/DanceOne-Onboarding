@@ -15,6 +15,7 @@ import { relations } from "drizzle-orm";
 // ENUMS
 // ============================================================================
 export enum OnboardingStatus {
+  ND_TO_APPROVE = "nd_to_approve", // New: Bulk imported, waiting for ND/Admin/HR to approve and send to candidate
   ND_DRAFT = "nd_draft",
   WAITING_FOR_CANDIDATE = "waiting_for_candidate",
   WAITING_FOR_HR = "waiting_for_hr",

@@ -43,6 +43,7 @@ import {
   IconFileExport,
   IconPlus,
   IconTrash,
+  IconUpload,
 } from "@tabler/icons-react";
 import DashboardCard from "@/app/components/shared/DashboardCard";
 import { OnboardingStatus } from "@/lib/db/schema";
@@ -88,6 +89,10 @@ interface DashboardStats {
 
 const getStatusChip = (status: string) => {
   const statusConfig: Record<string, { label: string; color: any }> = {
+    [OnboardingStatus.ND_TO_APPROVE]: { 
+      label: "ND to Approve", 
+      color: "secondary" // Purple
+    },
     [OnboardingStatus.ND_DRAFT]: { label: "Draft", color: "default" },
     [OnboardingStatus.WAITING_FOR_CANDIDATE]: {
       label: "CDD Forms",
@@ -421,6 +426,17 @@ export default function AdminDashboardPage() {
               }}
             >
               <IconUserPlus size={20} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Bulk Import">
+            <IconButton
+              onClick={() => router.push("/admin/bulk-import")}
+              sx={{
+                bgcolor: "secondary.light",
+                "&:hover": { bgcolor: "secondary.main", color: "white" },
+              }}
+            >
+              <IconUpload size={20} />
             </IconButton>
           </Tooltip>
           <Tooltip title="Export Records">

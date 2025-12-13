@@ -76,6 +76,10 @@ interface DashboardStats {
 
 const getStatusChip = (status: string) => {
   const statusConfig: Record<string, { label: string; color: any }> = {
+    [OnboardingStatus.ND_TO_APPROVE]: { 
+      label: "ND to Approve", 
+      color: "secondary" // Purple
+    },
     [OnboardingStatus.ND_DRAFT]: { label: "Draft", color: "default" },
     [OnboardingStatus.WAITING_FOR_CANDIDATE]: {
       label: "CDD Forms",
